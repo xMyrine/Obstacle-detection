@@ -3,7 +3,7 @@ import os
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 notebook_path = os.path.join(os.path.dirname(script_dir), 'm3_feature_vectors_representation.ipynb')
-fixed_path = os.path.join(os.path.dirname(script_dir), 'm3_feature_vectors_representation_f.ipynb')
+fixed_path = os.path.join(os.path.dirname(script_dir), 'm3_feature_vectors_representation.ipynb')
 
 try:
     with open(notebook_path, 'r', encoding='utf-8') as f:
