@@ -1,0 +1,124 @@
+\documentclass[twoside]{ctuthesis}
+
+\usepackage[unicode]{hyperref}
+\usepackage{listings}
+\usepackage[sorting=none]{biblatex}
+\usepackage{todonotes}
+\usepackage{array}
+\usepackage{textgreek}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{minted}
+\usepackage{verbatim}
+\usepackage{xcolor,colortbl}
+\usepackage{longtable}
+\usepackage{csquotes}
+
+\addbibresource{bibliography/bib_ctu.bib}
+\addbibresource{bibliography/bib_research.bib}
+
+\ctusetup{
+    author = {Minh Tu Pham},
+    supervisor = {Mgr. Ondřej Drbohlav, Ph.D.},
+    supervisor-address = {
+        Czech Technical University in Prague \\
+        Faculty of Electrical Engineering \\
+        Department of Cybernetics \\
+        Prague, 110 00 \\
+        Resslova 307/9 \\
+        E-215},
+    day = {00},
+    year = {2025},
+    month = {0},
+    title-czech = {Rozpoznávání vizuálních objektů s detekcí neznámých vstupů},
+    title-english = {Visual Object Recognition with Unknown Input Detection},
+    department-czech = {Katedra kybernetiky},
+    department-english = {Department of Cybernetics },
+    fieldofstudy-czech = {Otevřená informatika},
+    fieldofstudy-english = {Open Informatics},
+    subfieldofstudy-czech = {Základy umělé inteligence a počítačových věd},
+    subfieldofstudy-english = {Artificial Intelligence and Computer Science},
+    keywords-czech = {Detekci mimo distribuci (OOD), Rozpoznávání vizuálních objektů, Vizuální transformátory (ViTs), DINO, Post-hoc metody, Hierarchická detekce, Reprezentace příznaků, Detekce neznámých vstupů},
+    keywords-english = {Out-of-Distribution Detection (OOD), Visual Object Recognition, Vision Transformers (ViTs), DINO, Post-Hoc Methods, Hierarchical Detection, Feature Representation, Unknown Input Detection},
+    mainlanguage = {english},
+    titlelanguage = {english},
+    otherlanguages = {czech},
+    xfaculty = {F3},
+    front-specification = {false},
+    pkg-hyperref = false,
+    pkg-listings = true,
+}
+
+\ctuprocess
+
+\addto\ctucaptionsczech{
+	\def\supervisorname{Vedoucí}
+	\def\fieldofstudyname{Studijní program}
+	\def\subfieldofstudyname{Studijní obor}
+}
+
+\setlength{\parskip}{0em}
+
+\begin{abstract-czech}
+\\
+Tato práce se zabývá klíčovou výzvou detekce vstupů mimo distribuci (OOD) v systémech pro rozpoznávání vizuálních objektů. Ačkoliv výkonné modely, jako jsou konvoluční neuronové sítě (CNN) nebo vizuální transformátory (ViT), dosahují vynikajících výsledků na známých datech, jejich spolehlivost v reálných aplikacích klesá, když se setkají s novými nebo neznámými vstupy.
+
+Tato práce zkoumá různé techniky detekce OOD s využitím bohatých reprezentací příznaků extrahovaných z modelu ViT založeného na DINO.
+
+Náš výzkum má dva hlavní cíle. Prvním je umožnit robustní detekci anomálních vstupů, které leží mimo trénovací data modelu. Druhým je prozkoumat hierarchickou detekci: pokročilejší schopnost, kdy model identifikuje související, avšak nové vstupy tím, že jim přiřadí správnou, širší nadkategorii.
+
+Tato práce hodnotí praktické, post-hoc strategie aplikované na příznaky modelu DINO k dosažení těchto cílů bez náročného přetrénování. Naším cílem je identifikovat efektivní metody, které zlepšují jak odmítání OOD, tak hierarchické chápání, čímž činí tyto vizuální nástroje bezpečnějšími, inteligentnějšími a důvěryhodnějšími pro nasazení v reálném světě.
+
+\end{abstract-czech}
+
+\begin{abstract-english}
+\\
+This thesis addresses the critical challenge of out-of-distribution (OOD) detection in visual object recognition systems. While powerful models like Convolutional Neural Networks (CNNs) or Vision Transformers (ViTs) perform remarkably well on known data, their reliability in real-world applications diminishes when encountering novel or unknown inputs.
+
+This work explores various OOD detection techniques with rich feature representations extracted from a DINO-based ViT model.
+
+Our research has two primary objectives. First, to enable the robust detection of anomalous inputs that fall outside the model's training data. Second, to explore  hierarchical detection: a more advanced capability where the model identifies related but novel inputs by assigning them to a correct, broader super-category.
+
+This work evaluates practical, post-hoc strategies applied to the DINO model's features to achieve these goals without costly retraining. We aim to identify effective methods that enhance both OOD rejection and hierarchical understanding, thereby making these visual tools safer, more intelligent, and more trustworthy for real-world deployment.
+\end{abstract-english}
+
+
+\begin{document}
+
+\maketitle
+
+
+\chapter{Introduction}
+\label{intro}
+Introduction
+
+\section{Section}
+\label{intro_sekce}
+Section
+
+\begin{enumerate}
+    \item
+    \item
+    \item
+\end{enumerate}
+
+
+Citace\cite{test}
+
+\printbibliography[title=Literatura]
+
+\appendix
+
+\chapter{Použité zkratky}
+\label{app_shortcuts}
+
+\begin{center}
+    \begin{tabular}{r p{25em}}
+        \textbf{UX}             &   Uživatelský prožitek (User Experience) \\
+        \textbf{UI}             &   Uživatelské rozhraní (User Interface) \\
+    \end{tabular}
+\end{center}
+
+
+\end{document}
