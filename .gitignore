@@ -1,5 +1,35 @@
+#Python
 .env
 .venv
 data/
 *.ipynb_checkpoints
 __pycache__/
+
+#IDE
+.vscode/
+.idea/
+
+#Model Files
+*.pt
+
+#Latex Files
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.ps
+*.dvi
+*.lof
+*.lot
+*.nav
+*.run.xml
+*.idx
+*.ilg
+*.ind
+*.bcf
+*.ist
