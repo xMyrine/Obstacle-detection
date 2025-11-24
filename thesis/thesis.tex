@@ -91,11 +91,23 @@ This work evaluates practical, post-hoc strategies applied to the DINO model's f
 
 \chapter{Introduction}
 \label{intro}
-Introduction
+Deep learning architectures are currently experiencing a substantial surge in prevalence. Convolutional Neural Networks (CNNs) and Vision Transformers (ViTs) have demonstrated remarkable performance in various computer vision tasks. However, the real world is full of unknowns, which poses serious challenges for these models. When deployed in dynamic environments, they often encounter inputs that differ significantly from their training data, leading to unreliable predictions, \textbf{as illustrated in Figure \ref{fig:yolo_fail}.} The task of identifying such inputs, known as out-of-distribution (OOD) detection, is crucial for ensuring the safety and reliability of AI systems.
 
-\section{Section}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/yolo_sign_failure.jpg}
+    \caption[YOLO detection limitations on traffic signs]{Limitations of a standard YOLO detector. The model fails to recognize the nearest `No Parking' sign (False Negative) while misclassifying distant ones as `Stop Signs'. This illustrates the necessity for robust feature representations.}
+    \label{fig:yolo_fail}
+\end{figure}
+
+Previous research has primarily focused on binary OOD detection, where models must distinguish only between in-distribution (ID) and OOD samples.\cite{wallin2025prohocprobabilistichierarchicaloutofdistribution}
+While this is an important step towards robust AI, it does not fully capture the complexity of real-world scenarios. For example, when an autonomous vehicle encounters an unseen input, it is insufficient to simply flag it as OOD. Instead, a hierarchical approach assigns it to a generic class (e.g., `obstacle'), preserving semantic information essential for decision-making.
+
+To address these challenges, this thesis explores the capabilities of self-supervised Vision Transformers, specifically the DINOv3 architecture\cite{siméoni2025dinov3}. We selected this model for its state-of-the-art performance on out-of-distribution benchmarks (as shown in ObjectNet evaluations) and its ability to produce rich semantic representations while being kept frozen. This "frozen" capability allows for substantial computational savings, making the model ideal for efficient \textbf{post-hoc} analysis without the need for extensive fine-tuning.
+
+\section{Contributions}
 \label{intro_sekce}
-Section
+The following sections summarize the main contributions of this thesis:
 
 \begin{enumerate}
     \item
@@ -104,12 +116,27 @@ Section
 \end{enumerate}
 
 
-Citation
-\cite{test}
-\cite{siméoni2025dinov3}
-\cite{liu2020simpleprincipleduncertaintyestimation}
-\cite{wallin2025prohocprobabilistichierarchicaloutofdistribution}
-\cite{10350539}
+\chapter{Related Work}
+\label{related_work}
+This chapter reviews the existing literature relevant to the thesis. It covers the evolution of visual backbone architectures focused on Vision Transformers and Self-Supervised Learning. 
+In due course, it delves into established methodologies for OOD detection. 
+Finally, it explores the emerging concept of hierarchical OOD detection, highlighting its significance and the challenges it presents.
+
+\section{Visual Representation Learning}
+\label{sec:rel_representation}
+State-of-the-art computer vision architectures have evolved significantly from traditonal CNNs to more sophisticated models like ViTs.
+
+\subsection{Vision Transformers (ViT)}
+\label{sec:rel_vit}
+Vision Transformers (ViTs)\cite{dosovitskiy2021imageworth16x16words} have revolutionized and dethroned CNNs as the dominant architecture in computer vision. 
+Unlike CNNs, which process images via local receptive fields and convolutional layers, ViTs leverage the self-attention mechanism from the Transformer architecture\cite{vaswani2023attentionneed} to capture global dependencies in images.
+
+\subsection{Self-Supervised Learning and DINO}
+\label{sec:rel_ssl_dino}
+Training ViTs typically requires massive labeled datasets. To mitigate this, Self-Supervised Learning (SSL) has emerged as a powerful alternative. Methods like DINO (Distillation with No Labels) \cite{caron2021emergingpropertiesselfsupervisedvision} and its successors, DINOv2 and DINOv3 \cite{siméoni2025dinov3}, learn robust features by enforcing consistency between different views of the same image.
+
+\section{Out-of-Distribution Detection}
+\label{sec:rel_ood}
 
 \printbibliography[title=Literature]
 
@@ -125,6 +152,7 @@ Citation
         \textbf{OOD}             &   Out-of-Distribution \\
         \textbf{DINO}            &   Self-Distillation with No Labels \\
         \textbf{ID}             &   In-Distribution \\
+        \textbf{SSL}            &   Self-Supervised Learning \\
     \end{tabular}
 \end{center}
 
