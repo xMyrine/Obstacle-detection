@@ -162,6 +162,41 @@ Lee at al.\cite{lee2018simpleunifiedframeworkdetecting} proposed using the \text
 \end{itemize}
 While effective, the requirement for input preprocessing increases computational cost during inference compared to pure output-based methods.
 
+\subsection{Training Based OOD Methods}
+\label{sec:rel_trainingbased}
+While post-hoc methods operate on fixed models, training-based methods explicitly optimize the model parameters to enhance the separability between ID and OOD data during the learning phase.
+
+\textbf{Ensemble Methods:} Deep Ensembles\cite{lakshminarayanan2017simplescalablepredictiveuncertainty} utilizes multiple models trained independently to capture uncertainty. The variance in predictions across the ensemble serves as an indicator of OOD inputs, with higher variance suggesting greater uncertainty. 
+While this approach significantly improves uncertainty estimation and OOD detection accuracy, it comes with a high computational cost (both for training and inference) that is often prohibitive for real-time applications.
+
+\textbf{Regularized Training:} Other methods introduce specific loss functions or \textit{proxy} OOD data during training. For instance, CSI \cite{king2025contextuallearninganomalydetection} utilizes contrastive learning with strong data augmentations to simulate distributional shifts. Similarly, Adversarial Reciprocal Points Learning (ARPL) \cite{repec:hin:jnlmpe:8268249,} generates \textit{reciprocal points} in the latent space to represent the unknown class. Although ARPL achieves state-of-the-art performance on many benchmarks, it requires a complex training scheme and extensive hyper-parameter tuning \cite{10350539}.
+
+\textbf{Outlier Exposure (OE):} A direct approach involves training the model on both ID data and a large auxiliary dataset of known outliers (e.g., 80 Million Tiny Images). The model is penalized if it predicts high confidence for these outliers \cite{hendrycks2019deepanomalydetectionoutlier}. While effective, this method relies on the availability of a curated OOD dataset and may not generalize well to anomalies that are distributionally distinct from the auxiliary data.
+
+\section{Hierarchical and Open-Set Recognition}
+\label{sec:rel_hierarchical}
+Standard OOD treats all unknown inputs as a single homogeneous class. Nevertheless, in many real-world applications it is beneficial
+to understand semantic nature of unrecognized objects.
+
+\subsection{From Open-Set to Open-World}
+\label{sec:rel_openworld}
+\textbf{Open-Set Recognition (OSR)} extends long-established classification by requiring models to accurately classify known classes while rejecting unknown classes during inference\cite{6365193}. 
+
+\textbf{Open-World Recognition (OWR)} inclines to more a realistic approach, where the system must identify novel inputs and eventually incorporate them into its knowledge base through continuous learning\cite{Bendale_2015}.
+
+\subsection{Hierarchical Recognition}
+\label{sec:rel_hierarchical_recognition}
+In countless real-world scenarios, classes follow a taxonomic structure. For instance, in biological classification, species are grouped into genera, families, orders, and so on. Hierarchical recognition leverages this structure to provide more informative predictions.
+Instead of a flat classification where all errors are equal (e.g., confusing a "dog" with a "car" is the same as confusing a "dog" with a "wolf"), hierarchical models utilize structured label spaces. This allows the system to perform \textit{coarse-to-fine} inference. As illustrated in Figure \ref{fig:pets_hier} using the Oxford-IIIT Pet dataset \cite{6248092}, classes can be naturally grouped into super-categories (e.g., Felines vs. Canines).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/oxford_pet_III_hiearchy.png}
+    \caption[Visual hierarchy in Oxford-IIIT Pet Dataset]{Visual demonstration of semantic hierarchy. Fine-grained categories (specific breeds) naturally cluster into broader super-classes (Felines and Canines). A hierarchical OOD detector can leverage this structure to classify an unknown dog breed as a generic `Canine' rather than rejecting it completely.}
+    \label{fig:pets_hier}
+\end{figure}
+
+
 \printbibliography[title=Literature]
 
 \appendix
@@ -177,6 +212,11 @@ While effective, the requirement for input preprocessing increases computational
         \textbf{DINO}            &   Self-Distillation with No Labels \\
         \textbf{ID}             &   In-Distribution \\
         \textbf{SSL}            &   Self-Supervised Learning \\
+        \textbf{MSP}            &   Maximum Softmax Probability \\
+        \textbf{OE}             &   Outlier Exposure \\
+        \textbf{OSR}            &   Open-Set Recognition \\
+        \textbf{OWR}            &   Open-World Recognition \\
+        \textbf{ARPL}           &   Adversarial Reciprocal Points Learning \\
     \end{tabular}
 \end{center}
 
