@@ -204,6 +204,10 @@ In the context of OOD detection, this structure provides a robust fallback mecha
 \chapter{Our Research}
 \label{our_research}
 
+\section{Dataset Selection}
+
+\section{Feature representation via T-SNE}
+
 \section{Feature Visualization via Principal Component Analysis}
 \label{sec:visualization}
 
@@ -279,13 +283,15 @@ The resulting projection is normalized independently for each frame.
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer_local01.PNG}
-        \caption{Layer 1 (Input Space)}
+        \caption{Layer 1 (Early Features)} 
+        % "Input Space" is okay, but "Early Features" is more precise for local view
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer_local16.PNG}
-        \caption{Layer 16 (Transition)}
+        \caption{Layer 16 (Intermediate Features)} 
+        % Changed from "Transition" because we can't see the transition anymore
     \end{subfigure}
     
     \vspace{0.5cm} % Add vertical space between rows
@@ -294,18 +300,20 @@ The resulting projection is normalized independently for each frame.
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer_local26.PNG}
-        \caption{Layer 26 (Semantic Space)}
+        \caption{Layer 26 (Deep Features)} 
+        % Changed from "Semantic Space" because the color doesn't indicate the space
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer_local_39.PNG}
-        \caption{Layer 39 (Final State)}
+        \caption{Layer 39 (Final Representation)}
     \end{subfigure}
     
-    \caption[Local PCA Feature Visualization]{Visualization of feature maps using Local PCA (Method B). Unlike the Global approach (Fig.~\ref{fig:global_pca_grid}), dimensionality reduction is performed independently for each layer. This maximizes local contrast (sharpening boundaries in Layers 1 and 16) but results in inconsistent color semantics across the network depth, as the principal components are re-calculated at each step.}
+    \caption[Local PCA Feature Visualization]{Visualization of feature maps using Local PCA (Method B). Unlike the Global approach, dimensionality reduction is performed independently for each layer. Note that while \textbf{Intermediate Features (b)} and \textbf{Deep Features (c)} show high contrast, the loss of a shared coordinate system means the ``Red-to-Azure'' trajectory is no longer visible.}
     \label{fig:local_pca_grid}
 \end{figure}
+
 
 \subsection{Comparative Analysis}
 The comparison between these two approaches highlights a trade-off between \textit{local discriminability} and \textit{global coherence}.
@@ -316,6 +324,8 @@ The comparison between these two approaches highlights a trade-off between \text
 \end{enumerate}
 
 For the final visualizations presented in this thesis, we primarily utilize the Global PCA approach (Method A), as our research objective is to demonstrate the stability and trajectory of object representations across the network.
+
+\section{Attention Heatmap}
 
 \printbibliography[title=Literature]
 
