@@ -14,6 +14,7 @@
 \usepackage{xcolor,colortbl}
 \usepackage{longtable}
 \usepackage{csquotes}
+\usepackage{subcaption}
 
 \addbibresource{bibliography/bib_ctu.bib}
 \addbibresource{bibliography/bib_research.bib}
@@ -200,6 +201,121 @@ Hierarchical models utilize structured label spaces, often derived from ontologi
 \end{figure}
 In the context of OOD detection, this structure provides a robust fallback mechanism. If the model encounters a novel input that implies high uncertainty at the leaf level, it can back-off to a parent node (e.g., classifying an unknown animal simply as \textit{Animal}), thereby preserving system reliability and safety.
 
+\chapter{Our Research}
+\label{our_research}
+
+\section{Feature Visualization via Principal Component Analysis}
+\label{sec:visualization}
+
+To qualitatively analyze the internal dynamics of the DinoV3 architecture~\cite{siméoni2025dinov3}, we developed a visualization pipeline capable of mapping the high-dimensional latent space (1024 dimensions) into a perceptible 3-dimensional RGB color space. This process, which we refer to as a ``Layer-wise Feature Trajectory,'' allows for the observation of semantic evolution as information propagates from the shallow input layers to the deep semantic layers. The use of PCA to inspect the semantic layout of self-supervised features follows methodologies established in DINO-based research~\cite{siméoni2025dinov3}.
+
+\subsection{Data Extraction and Pre-processing}
+The extraction mechanism relies on registering \textit{forward hooks} within the PyTorch framework. We iterate through the model's architecture to identify the transformer blocks (specifically \texttt{model.encoder.layer}) and intercept the output tensor $O^{(l)}$ at each layer $l \in \{0, \dots, L-1\}$.
+
+For a given input image, the output at layer $l$ is a tensor of shape $(1, N_{seq}, D)$, where $N_{seq}$ represents the sequence length and $D$ is the embedding dimension. To visualize the spatial layout of features, we discard the special tokens—specifically the \texttt{[CLS]} token (index 0) and the register tokens (indices 1--4, present in DinoV3)—retaining only the patch tokens. These patch tokens are then reshaped back into a 2D grid corresponding to the original image topology ($H \times W$).
+
+\subsection{Dimensionality Reduction Strategies}
+Visualizing $D=1024$ dimensions requires projecting the data onto a lower-dimensional manifold. We implemented and compared two distinct strategies for this projection using Principal Component Analysis (PCA): \textit{Global PCA} and \textit{Local PCA}.
+
+\subsubsection{Method A: Global PCA (Trajectory Preservation)}
+In the Global approach, we prioritize the temporal and geometric consistency of the features across the network depth. We aggregate the feature vectors from all layers $l$ and all spatial positions into a single global dataset $\mathbf{X}_{global}$:
+
+\begin{equation}
+    \mathbf{X}_{global} = \bigcup_{l=0}^{L-1} \mathbf{X}^{(l)}
+\end{equation}
+
+A single PCA transformation matrix $W_{global}$ is fitted on $\mathbf{X}_{global}$ to identify the three principal components explaining the maximum variance across the \textit{entire} inference process. Every layer is then projected using this fixed basis.
+
+\textbf{Visual Outcome:} This method results in a smooth color progression. We observed a distinct shift from red hues in initial layers to azure/cyan hues in deeper layers. This indicates that the feature subspace occupied by raw visual patterns (shallow layers) is mathematically orthogonal to the subspace of semantic abstractions (deep layers). The color shift effectively visualizes the ``drift'' of the image representation through the high-dimensional space. \textbf{This trajectory is visually summarized in Figure~\ref{fig:global_pca_grid}, where the subject (`Cat') transitions from a pixel-dominated red representation to a semantically abstract azure representation.}
+
+\begin{figure}[htbp]
+    \centering
+    % --- TOP ROW ---
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer00.PNG}
+        \caption{Layer 0 (Input Space)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer21.PNG}
+        \caption{Layer 21 (Transition)}
+    \end{subfigure}
+    
+    \vspace{0.5cm} % Add vertical space between rows
+    
+    % --- BOTTOM ROW ---
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer29.PNG}
+        \caption{Layer 29 (Semantic Space)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer39.PNG}
+        \caption{Layer 39 (Final State)}
+    \end{subfigure}
+    
+    \caption[Global PCA Feature Evolution]{Visual evolution of the feature representation for the `Cat' class using Global PCA (Method A). The chromatic shift from red (Layer 0) to azure (Layer 39) illustrates the global drift of feature representations described in Section~\ref{sec:visualization}.}
+    \label{fig:global_pca_grid}
+\end{figure}
+
+\subsubsection{Method B: Local PCA (Contrast Maximization)}
+In the Local approach, we prioritize the maximum statistical separation within a specific layer, disregarding the global context. For each individual layer $l$, we instantiate a new PCA estimator and fit it solely on the features $\mathbf{X}^{(l)}$ of that specific layer.
+
+\begin{equation}
+    V^{(l)}_{local} = \text{PCA}_{l}(\mathbf{X}^{(l)})
+\end{equation}
+
+The resulting projection is normalized independently for each frame.
+
+\textbf{Visual Outcome:} This results in visualizations with maximum local contrast, highlighting the most salient features (e.g., edges, textures) at every specific depth. However, this method sacrifices temporal consistency. Because the eigenvectors are re-calculated at every step, the direction of the principal components can flip arbitrarily (the \textit{sign ambiguity} problem in PCA). This manifests as abrupt, non-semantic color inversions (flickering) between consecutive layers, making it difficult to track the evolution of a specific concept. \textbf{The effect of this local contrast maximization is shown in Figure~\ref{fig:local_pca_grid}. While fine-grained details are visible, the colors hold no global meaning, changing primarily due to statistical variations within the layer rather than semantic evolution.}
+
+\begin{figure}[htbp]
+    \centering
+    % --- TOP ROW ---
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer_local01.PNG}
+        \caption{Layer 1 (Input Space)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer_local16.PNG}
+        \caption{Layer 16 (Transition)}
+    \end{subfigure}
+    
+    \vspace{0.5cm} % Add vertical space between rows
+    
+    % --- BOTTOM ROW ---
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer_local26.PNG}
+        \caption{Layer 26 (Semantic Space)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer_local_39.PNG}
+        \caption{Layer 39 (Final State)}
+    \end{subfigure}
+    
+    \caption[Local PCA Feature Visualization]{Visualization of feature maps using Local PCA (Method B). Unlike the Global approach (Fig.~\ref{fig:global_pca_grid}), dimensionality reduction is performed independently for each layer. This maximizes local contrast (sharpening boundaries in Layers 1 and 16) but results in inconsistent color semantics across the network depth, as the principal components are re-calculated at each step.}
+    \label{fig:local_pca_grid}
+\end{figure}
+
+\subsection{Comparative Analysis}
+The comparison between these two approaches highlights a trade-off between \textit{local discriminability} and \textit{global coherence}.
+
+\begin{enumerate}
+    \item \textbf{Global PCA} is superior for analyzing the network's hierarchical structure. It serves as a visual proof that DinoV3 processes information sequentially, moving the data manifold from a ``pixel-correlation'' space to a ``semantic-correlation'' space~\cite{siméoni2025dinov3}.
+    \item \textbf{Local PCA} is superior for inspecting the granular attention of specific layers. It reveals that even in intermediate layers, the model separates foreground and background with high variance, although this separation is not yet aligned with the final semantic output.
+\end{enumerate}
+
+For the final visualizations presented in this thesis, we primarily utilize the Global PCA approach (Method A), as our research objective is to demonstrate the stability and trajectory of object representations across the network.
 
 \printbibliography[title=Literature]
 
