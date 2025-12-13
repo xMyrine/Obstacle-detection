@@ -201,10 +201,122 @@ Hierarchical models utilize structured label spaces, often derived from ontologi
 \end{figure}
 In the context of OOD detection, this structure provides a robust fallback mechanism. If the model encounters a novel input that implies high uncertainty at the leaf level, it can back-off to a parent node (e.g., classifying an unknown animal simply as \textit{Animal}), thereby preserving system reliability and safety.
 
-\chapter{Our Research}
+\chapter{Methodology and Analysis}
 \label{our_research}
+The initial phase of this research consisted of assessing the efficacy of DINOv3 feature representations for our OOD problem. A critical requirement for our task is the model's ability to enforce tight grouping of semantically similar classes in the feature space while maintaining separability from distinct concepts.
+
+To verify this property, we extracted feature embeddings from diverse datasets and applied dimensionality reduction techniques such as Principal Component Analysis (PCA) and t-Distributed Stochastic Neighbor Embedding (t-SNE). 
 
 \section{Dataset Selection}
+\label{sec:dataset_selection}
+To evaluate the robustness and generalizability of the features learned by the DINOv3 model, we employed a suite of standard computer vision benchmark datasets, alongside a custom dataset to test domain shifts:
+\begin{itemize}
+    \item \textbf{CIFAR-10} \cite{Krizhevsky2009LearningML}: A widely utilized benchmark consisting of 60,000 $32 \times 32$ color images across 10 distinct classes, with 6,000 images per class. The standard split includes 50,000 training images and 10,000 test images.
+    \item \textbf{CIFAR-100} \cite{Krizhevsky2009LearningML}: Similar in structure to CIFAR-10 but significantly more challenging due to its fine-grained nature. It contains 100 classes with 600 images each, split into 500 training and 100 testing images per class.
+    \item \textbf{SVHN (Street View House Numbers)} \cite{Netzer2011ReadingDI}: A real-world image dataset designed for developing machine learning and object recognition algorithms. It comprises over 600,000 labeled digits ($0-9$) cropped from house numbers in Google Street View imagery, presenting a distinct distribution shift from standard object datasets.
+    \item \textbf{Food-101} \cite{bossard2014food}: A large-scale dataset for fine-grained food recognition, consisting of 101,000 images representing 101 different food categories. Each category contains 1,000 images, offering a high variance in visual appearance within classes.
+    \item \textbf{Oxford-IIIT Pet} \cite{6248092}: A dataset containing 7,349 images of 37 different breeds of cats and dogs. Each image is annotated with a breed label and a pixel-level segmentation mask, making it suitable for both classification and segmentation tasks.
+    \item \textbf{Pokémon Dataset}: A custom dataset containing images of various Pokémon species. This dataset was introduced to evaluate the model's ability to generalize to unseen, synthetic classes that differ significantly from natural images.
+\end{itemize}
+
+\section{Feature representation via PCA}
+\label{sec:feature_representation_pca}
+Prior to investigating the layer-wise evolution of features within the DINOv3 architecture, we conducted an initial assessment of the overall quality of the learned representations. This involved extracting feature embeddings from the final layer of the model for images across the selected datasets. 
+
+\subsection{Dimensionality Reduction and Visualization}
+To visuallize the high-dimensional feature space of the data and demonstrate class separability, we employed \textbf{Principal Component Analysis (PCA)} to reduce the dimensionality of the embeddings from $\mathbb{R}^{1024}$ to $\mathbb{R}^2$ and $\mathbb{R}^3$.
+
+The goal was to project the \textit{final} representations of either the entire dataset or a subset onto a common manifold. This visualization helped us to confirm the following properties:
+\begin{itemize}
+    \item \textbf{Intra-class Compactness:} Samples of the same class are grouped tightly together.
+    \item \textbf{Inter-class Separability:} Different classes form distinct, non-overlapping clusters.
+\end{itemize}
+
+\section{Visual Analysis of Feature Distributions via PCA}
+\label{sec:pca_feature_analysis}
+
+\subsection{General Clustering Performance}
+For the majority of the evaluated datasets such as CIFAR-10, FOOD101 and Oxford-IIIT Pet, the visualization reveals a strong class-separation capability as illustrated in Figure~\ref{fig:general_clustering}. The class centroids form distinct clusters with minimal overlap, indicating that the DINOv3 model has learned robust and discriminative features.
+
+\begin{figure}[htbp]
+    \centering
+    % --- TOP ROW: CIFAR-10 (2D vs 3D) ---
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        % Replace with your actual filename
+        \includegraphics[width=\textwidth]{figures/pca_feature_extraction/cifar_10_pca_2d.png}
+        \caption{CIFAR-10 (2D Projection)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        % Replace with your actual filename
+        \includegraphics[width=\textwidth]{figures/pca_feature_extraction/cifar_10_pca_3d.png}
+        \caption{CIFAR-10 (3D Projection)}
+    \end{subfigure}
+    
+    \vspace{0.5cm} % Vertical spacing between rows
+    
+    % --- BOTTOM ROW: Other Datasets (3D) ---
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        % Replace with your actual filename
+        \includegraphics[width=\textwidth]{figures/pca_feature_extraction/food101_pca_3d_50.png}
+        \caption{Food101 (3D Projection)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        % Replace with your actual filename
+        \includegraphics[width=\textwidth]{figures/pca_feature_extraction/oxford_pets_pca_all_3d.png}
+        \caption{Oxford-IIIT Pet (3D Projection)}
+    \end{subfigure}
+    
+    \caption[General Clustering Performance]{PCA visualizations of feature space separation across standard benchmarks. \textbf{(a)} and \textbf{(b)} compare 2D vs. 3D projections for CIFAR-10, demonstrating clear intra-class cohesion. \textbf{(c)} and \textbf{(d)} extend this analysis to Food101 and Oxford-IIIT Pet, confirming the model's ability to maintain distinct semantic clusters across diverse domains.}
+    \label{fig:general_clustering}
+\end{figure}
+
+\subsection{Challenges in Cross-Domain Representation}
+The analysis of the Pokémon dataset presents a more complex distribution, as illustrated in Figure~\ref{fig:pokemon_pca}. While some classes form distinct clusters, the boundaries are significantly not as well-defined as in the natural image datasets.
+
+We attribute this behavior to high \textbf{intra-class domain variance}. Unlike standard datasets where each class has a relatively consistent visual appearance, the Pokémon dataset mixes heterogeneous sources:
+\begin{itemize}
+    \item \textbf{Stylistic variance:} 2D sprites, 3D renders, anime frames, and real-world photos of merchandise.
+    \item \textbf{Feature mismatch:} Visually dissimilar instances can share the same label, reducing embedding compactness.
+\end{itemize}
+
+Consequently, the model likely creates multiple sub-clusters for a single class based on these artistic domains rather than merging them into a single unified entity, resulting in the observed ``sketchy'' separation.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pca_feature_extraction/pokemon_3d_pca.png}
+    \caption[PCA Visualization of Pokémon Dataset]{Feature space distribution of the Pokémon dataset. The clusters exhibit higher variance and less distinct separation compared to natural images. This is attributed to the dataset's multi-domain nature, containing stylistically divergent samples (e.g., pixel art vs. plush toys) within the same semantic category.}
+    \label{fig:pokemon_pca}
+\end{figure}
+
+\subsection{Failure Case: Street View House Numbers (SVHN)}
+A notable deviation is observed with the SVHN dataset, where PCA fails to separate digit classes ($0-9$), forming a single overlapped cloud as shown in Figure~\ref{fig:svhn_pca}.
+
+We attribute this failure to the model's inherent \textbf{texture bias}. Unlike natural objects, digits are defined purely by geometry rather than semantic textures (e.g., fur or foliage). Furthermore, background clutter often occupies more area than the digit itself. Without fine-tuning, the encoder likely prioritizes these background textures over the structural signal of the class label.
+
+\begin{figure}[htbp]
+    \centering
+    % --- SVHN 2D vs 3D ---
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_feature_extraction/svhn_pca_2d.png}
+        \caption{SVHN (2D Projection)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_feature_extraction/svhn_pca_3d.png}
+        \caption{SVHN (3D Projection)}
+    \end{subfigure}
+    
+    \caption[PCA Failure Case on SVHN]{Feature space visualization of the SVHN dataset. Both 2D and 3D projections show significant class overlap, indicating the model's inability to linearly separate geometric digits from background texture without specific fine-tuning.}
+    \label{fig:svhn_pca}
+\end{figure}
 
 \section{Feature representation via T-SNE}
 
