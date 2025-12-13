@@ -318,7 +318,84 @@ We attribute this failure to the model's inherent \textbf{texture bias}. Unlike 
     \label{fig:svhn_pca}
 \end{figure}
 
-\section{Feature representation via T-SNE}
+\section{Feature representation via t-SNE}
+\label{sec:feature_representation_tsne}
+
+While PCA effectively demonstrates the separability of classes, it is inherently a linear technique. To ensure that we did not overlook complex, non-linear structures in the feature space, we also applied \textbf{t-Distributed Stochastic Neighbor Embedding (t-SNE)} \cite{JMLR:v9:vandermaaten08a,}.
+
+\subsection{Motivation and Methodology}
+Unlike PCA, t-SNE is a probabilistic technique designed to preserve local neighborhood structures. It is particularly effective at revealing clusters in data where the relationship between classes is non-linear. We hypothesized that t-SNE might uncover finer sub-structures or better resolve classes that appeared only weakly separated in the linear PCA projection (e.g., some Pokémon classes).
+
+\subsection{Comparative Analysis: Cleaner Separation and Non-Linearity}
+The application of t-SNE yielded a distinct visual improvement over PCA, producing significantly cleaner and more compact clusters. By prioritizing local neighborhood preservation, t-SNE was able to resolve boundaries that appeared diffuse in the linear projection.
+
+\textbf{General Benchmarks:} For standard datasets like CIFAR-10, Food-101, and Oxford-IIIT Pet, the clusters became tighter and more isolated, reinforcing the robust semantic separability of the DINOv3 features. This general performance is visualized in Figure~\ref{fig:tsne_general}.
+
+\begin{figure}[htbp]
+    \centering
+    % Layout: 3 images side-by-side (1x3)
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/tsne_feature_extraction/cifar10_tsne_2d.png}
+        \caption{CIFAR-10}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/tsne_feature_extraction/food101_2d.png}
+        \caption{Food-101}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/tsne_feature_extraction/oxford_pets_tsne_2d.png}
+        \caption{Oxford Pets}
+    \end{subfigure}
+    
+    \caption[t-SNE General Clustering]{t-SNE visualizations for CIFAR-10, Food-101, and Oxford-IIIT Pet. Compared to PCA, the non-linear embedding produces significantly tighter clusters with cleaner boundaries, demonstrating the high quality of the feature representations.}
+    \label{fig:tsne_general}
+\end{figure}
+
+\textbf{The Pokémon Case:} The most notable improvement was observed in the Pokémon dataset (Figure~\ref{fig:tsne_pokemon}). While PCA struggled with the high domain variance (mixing sprites, 3D renders, and plushies), t-SNE successfully disentangled these non-linear relationships. The resulting visualization shows clear, distinct clusters for different Pokémon species, suggesting that while the domain shift introduces non-linearity, the semantic identity remains locally consistent.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/tsne_feature_extraction/pokemon_tsne_2d.png}
+        \caption{Pokémon (2D t-SNE)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/tsne_feature_extraction/pokemon_tsne_3d.png}
+        \caption{Pokémon (3D t-SNE)}
+    \end{subfigure}
+    
+    \caption[t-SNE on Pokémon Dataset]{t-SNE visualization of the Pokémon dataset. Unlike the linear PCA projection, t-SNE successfully resolves the non-linear domain shifts, separating the classes into distinct islands.}
+    \label{fig:tsne_pokemon}
+\end{figure}
+
+\textbf{Persistent Failure on SVHN:} Conversely, the SVHN dataset (Figure~\ref{fig:tsne_svhn}) remained inseparable. Even under non-linear embedding, the digit classes overlap in a single amorphous cloud. The persistence of this failure across both linear (PCA) and non-linear (t-SNE) techniques confirms that the issue is not a projection artifact but a fundamental lack of discriminatory signal in the features, driven by the model's bias towards background texture over geometric shape.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/tsne_feature_extraction/svhn_2d.png}
+        \caption{SVHN (2D t-SNE)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/tsne_feature_extraction/svhn_tsne_3d.png}
+        \caption{SVHN (3D t-SNE)}
+    \end{subfigure}
+    
+    \caption[t-SNE Failure on SVHN]{t-SNE visualization of the SVHN dataset. The failure to separate classes persists even with non-linear dimensionality reduction, confirming the lack of semantic separability in the underlying features.}
+    \label{fig:tsne_svhn}
+\end{figure}
+
 
 \section{Feature Visualization via Principal Component Analysis}
 \label{sec:visualization}
