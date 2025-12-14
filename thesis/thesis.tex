@@ -397,15 +397,15 @@ The application of t-SNE yielded a distinct visual improvement over PCA, produci
 \end{figure}
 
 
-\section{Feature Visualization via Principal Component Analysis}
+\section{Layer-wise Feature Evolution and Trajectory Analysis}
 \label{sec:visualization}
 
-To qualitatively analyze the internal dynamics of the DinoV3 architecture~\cite{siméoni2025dinov3}, we developed a visualization pipeline capable of mapping the high-dimensional latent space (1024 dimensions) into a perceptible 3-dimensional RGB color space. This process, which we refer to as a ``Layer-wise Feature Trajectory,'' allows for the observation of semantic evolution as information propagates from the shallow input layers to the deep semantic layers. The use of PCA to inspect the semantic layout of self-supervised features follows methodologies established in DINO-based research~\cite{siméoni2025dinov3}.
+To qualitatively analyze the internal dynamics of the DINOv3 architecture~\cite{siméoni2025dinov3}, we developed a visualization pipeline capable of mapping the high-dimensional latent space of 1024 dimensions into a perceptible 3-dimensional RGB color space. This process, which we refer to as a ``Layer-wise Feature Trajectory,'' allows for the observation of semantic evolution as information propagates from the shallow input layers to the deep semantic layers. The use of PCA to inspect the semantic layout of self-supervised features follows methodologies established in DINO-based research~\cite{siméoni2025dinov3}.
 
 \subsection{Data Extraction and Pre-processing}
 The extraction mechanism relies on registering \textit{forward hooks} within the PyTorch framework. We iterate through the model's architecture to identify the transformer blocks (specifically \texttt{model.encoder.layer}) and intercept the output tensor $O^{(l)}$ at each layer $l \in \{0, \dots, L-1\}$.
 
-For a given input image, the output at layer $l$ is a tensor of shape $(1, N_{seq}, D)$, where $N_{seq}$ represents the sequence length and $D$ is the embedding dimension. To visualize the spatial layout of features, we discard the special tokens—specifically the \texttt{[CLS]} token (index 0) and the register tokens (indices 1--4, present in DinoV3)—retaining only the patch tokens. These patch tokens are then reshaped back into a 2D grid corresponding to the original image topology ($H \times W$).
+For a given input image, the output at layer $l$ is a tensor of shape $(1, N_{seq}, D)$, where $N_{seq}$ represents the sequence length and $D$ is the embedding dimension. To visualize the spatial layout of features, we discard the special tokens—specifically the \texttt{[CLS]} token and the register tokens retaining only the patch tokens. These patch tokens are then reshaped back into a 2D grid corresponding to the original image topology ($H \times W$).
 
 \subsection{Dimensionality Reduction Strategies}
 Visualizing $D=1024$ dimensions requires projecting the data onto a lower-dimensional manifold. We implemented and compared two distinct strategies for this projection using Principal Component Analysis (PCA): \textit{Global PCA} and \textit{Local PCA}.
@@ -417,7 +417,9 @@ In the Global approach, we prioritize the temporal and geometric consistency of 
     \mathbf{X}_{global} = \bigcup_{l=0}^{L-1} \mathbf{X}^{(l)}
 \end{equation}
 
-A single PCA transformation matrix $W_{global}$ is fitted on $\mathbf{X}_{global}$ to identify the three principal components explaining the maximum variance across the \textit{entire} inference process. Every layer is then projected using this fixed basis.
+To ensure that feature representations from different depths of the network are geometrically comparable, we compute a single, unified transformation matrix $W_{global}$. This is achieved by fitting the PCA estimator on the aggregated dataset $\mathbf{X}_{global}$, effectively forcing the algorithm to learn a "global dictionary" of variance that encompasses the model's entire inference process—from raw pixel statistics in shallow layers to high-level semantic abstractions in deep layers.
+
+Mathematically, this identifies the three principal components that explain the maximum variance across the \textit{full hierarchy} of the network. Once this fixed basis $W_{global}$ is established, we project the specific feature tensor $\mathbf{X}^{(l)}$ of every individual layer $l$ onto these static axes. By using a constant projection matrix for all layers, we ensure that the resulting color shifts in the visualization represent genuine geometric transformations of the feature vectors (e.g., the data manifold rotating from a "pixel-correlation" subspace to a "semantic" subspace) rather than arbitrary statistical realignments between frames.
 
 \textbf{Visual Outcome:} This method results in a smooth color progression. We observed a distinct shift from red hues in initial layers to azure/cyan hues in deeper layers. This indicates that the feature subspace occupied by raw visual patterns (shallow layers) is mathematically orthogonal to the subspace of semantic abstractions (deep layers). The color shift effectively visualizes the ``drift'' of the image representation through the high-dimensional space. \textbf{This trajectory is visually summarized in Figure~\ref{fig:global_pca_grid}, where the subject (`Cat') transitions from a pixel-dominated red representation to a semantically abstract azure representation.}
 
@@ -464,7 +466,20 @@ In the Local approach, we prioritize the maximum statistical separation within a
 
 The resulting projection is normalized independently for each frame.
 
-\textbf{Visual Outcome:} This results in visualizations with maximum local contrast, highlighting the most salient features (e.g., edges, textures) at every specific depth. However, this method sacrifices temporal consistency. Because the eigenvectors are re-calculated at every step, the direction of the principal components can flip arbitrarily (the \textit{sign ambiguity} problem in PCA). This manifests as abrupt, non-semantic color inversions (flickering) between consecutive layers, making it difficult to track the evolution of a specific concept. \textbf{The effect of this local contrast maximization is shown in Figure~\ref{fig:local_pca_grid}. While fine-grained details are visible, the colors hold no global meaning, changing primarily due to statistical variations within the layer rather than semantic evolution.}
+\textbf{Visual Outcome and Utility:}
+While this method sacrifices the ability to track the global trajectory, it offers superior \textit{local discriminability}. 
+
+In the Global view, the dominant variance is the \textbf{depth} signal (Input vs. Output), which can overpower subtle spatial details. By re-fitting the PCA locally, we filter out this depth signal and force the visualization to answer a specific question: \textit{``What are the most significant differences between patches at this specific stage of processing?''}
+
+This renders fine-grained details visible that are otherwise washed out in the Global view:
+\begin{itemize}
+    \item \textbf{Shallow Layers:} It reveals high-frequency texture boundaries and edge orientations that the model is attending to.
+    \item \textbf{Deep Layers:} It highlights subtle semantic separations (e.g., distinguishing between a dog's ear and its head) which might represent only a fraction of the total global variance but are critical for the final classification task.
+\end{itemize}
+
+Therefore, Local PCA acts as a high-gain contrast filter, useful for inspecting the granular attention mechanisms of specific blocks without the bias of the network's overall depth trajectory.
+
+\textbf{Visual Outcome:} This results in visualizations with maximum local contrast, highlighting the most salient features such as edges and textures at every specific depth. However, this method sacrifices temporal consistency. Because the eigenvectors are re-calculated at every step, the direction of the principal components can flip arbitrarily (the \textit{sign ambiguity} problem in PCA). This manifests as abrupt, non-semantic color inversions between consecutive layers, making it difficult to track the evolution of a specific concept. \textbf{The effect of this local contrast maximization is shown in Figure~\ref{fig:local_pca_grid}. While fine-grained details are visible, the colors hold no global meaning, changing primarily due to statistical variations within the layer rather than semantic evolution.}
 
 \begin{figure}[htbp]
     \centering
@@ -512,9 +527,98 @@ The comparison between these two approaches highlights a trade-off between \text
     \item \textbf{Local PCA} is superior for inspecting the granular attention of specific layers. It reveals that even in intermediate layers, the model separates foreground and background with high variance, although this separation is not yet aligned with the final semantic output.
 \end{enumerate}
 
-For the final visualizations presented in this thesis, we primarily utilize the Global PCA approach (Method A), as our research objective is to demonstrate the stability and trajectory of object representations across the network.
+\section{Spatial Attention Dynamics: The Scanning Protocol}
+Having analyzed the hierarchical evolution of features across the network depth (chapter~\ref{sec:visualization}). We now turn our focus to the spatial relationships encoded within the final semantic representations. Specifically, we aim to interpret the \textit{self-attention mechanism} of the DINOv3 architecture to understand how different image regions semantically \textbf{connect} to one another.
 
-\section{Attention Heatmap}
+\subsection{Methodology: Attention Matrix Extraction}
+The core idea is to extract raw attention weights from the final Transformer block of our model. For a given input image, we forward pass it and intercept the 
+self-attention weights $A$ from the last layer. The raw attention tensor has the shape $(H, N, N)$ where $H$ is the number of heads and $N$ is the sequence length (tokens).
+
+To obtain a unified spatial map, we average the weights across all attention heads and discard the special \texttt{[CLS]} and register tokens, resulting in a patch-to-patch attention matrix $A_{patch} \in \mathbb{R}^{P \times P}$, where $P$ is the number of spatial patches.
+
+\subsection{The Scanning Mechanism}
+The visualization is constructed as a temporal sequence where each frame represents a specific spatial query:
+\begin{enumerate}
+    \item \textbf{Query Selection (The Green Box):} We define a sliding window of size $k \times k$ patches that traverses the image grid in a raster scan pattern. This window represents the region of interest $Q_{pos}$.
+    \item \textbf{Attention Integration:} For each window position, we aggregate the attention weights originating from the patches inside the window. This computes a heatmap $M$ representing the cumulative attention of the query region:
+    \begin{equation}
+        M = \sum_{i \in Q_{pos}} A_{patch}[i, :]
+    \end{equation}
+    \item \textbf{Visual Overlay:} The resulting heatmap $M$ is normalized and overlaid onto the original image.
+\end{enumerate}
+
+\subsection{Visual Interpretation}
+The resulting videos provide a granular view of the model's internal object segmentation. As the green query box moves over an object, the attention heatmap instantly ``lights up'' the entire semantic entity, demonstrating that the local patches are attending globally to the object they belong to.
+
+\subsubsection{Semantic Symmetry and Parts}
+In Figure~\ref{fig:british_shorthair}, we observe the model's understanding of facial symmetry and biological features. When the query focuses on one eye, the attention map strongly activates the contralateral eye, linking them as a single semantic concept. Similarly, querying the nose region triggers attention across the whiskers, suggesting the model has learned to group these fine-grained features together.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/attention_heatmap/brittish_short_attention_heatmap.PNG}
+        \caption{Eye-to-Eye Correspondence}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/attention_heatmap/brittish_short_nose_attention_heatmap.PNG}
+        \caption{Nose-to-Whiskers Association}
+    \end{subfigure}
+    \caption[Semantic Parts Attention]{Attention dynamics on the British Shorthair. (a) Querying the left eye results in strong attention on the right eye. (b) Querying the nose spreads attention across the whisker pad.}
+    \label{fig:british_shorthair}
+\end{figure}
+
+\subsubsection{Object Boundaries and Unity}
+Figure~\ref{fig:cat_features} demonstrates the model's ability to distinguish object boundaries and anatomical unity. 
+\begin{itemize}
+    \item \textbf{Background Awareness:} When the query is placed on the background snow (Figure~\ref{fig:cat_features}a), the attention avoids the cat entirely, effectively delineating the negative space around the object boundary.
+    \item \textbf{Anatomical Grouping:} Querying the ear (Figure~\ref{fig:cat_features}b) highlights the top of the head and the opposite ear, while querying the legs (Figure~\ref{fig:cat_features}c) restricts attention specifically to the limb structure.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/attention_heatmap/cat_background_attention_heatmap.PNG}
+        \caption{Background Query}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/attention_heatmap/cat_ears_attention_heatmap.PNG}
+        \caption{Head/Ear Query}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/attention_heatmap/cat_legs_attention_heatmap.PNG}
+        \caption{Legs Query}
+    \end{subfigure}
+    \caption[Attention Segmentation on Cat]{(a) A background patch attends to the surroundings, respecting the object boundary. (b) An ear patch attends to the full head structure. (c) A leg patch attends specifically to the limbs.}
+    \label{fig:cat_features}
+\end{figure}
+
+\subsubsection{Scene Segmentation}
+This behavior extends to complex scenes. In the cityscape example (Figure~\ref{fig:city_attention}), querying a patch of sky activates the entire sky region while ignoring the skyline. Conversely, querying a specific skyscraper isolates that building's vertical structure from the surrounding urban clutter, demonstrating unsupervised instance-level discrimination.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/attention_heatmap/city_background_attention_heatmap.PNG}
+        \caption{Sky Segmentation}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/attention_heatmap/city_building_attention_heatmap.PNG}
+        \caption{Building Instance Isolation}
+    \end{subfigure}
+    \caption[Cityscape Attention]{(a) Querying the sky activates the atmospheric region only. (b) Querying a specific building isolates that structure from the rest of the city.}
+    \label{fig:city_attention}
+\end{figure}
 
 \printbibliography[title=Literature]
 
