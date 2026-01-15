@@ -33,5 +33,6 @@ __pycache__/
 *.ind
 *.bcf
 *.ist
+*.synctex(busy)
 
 *.DS_Store
