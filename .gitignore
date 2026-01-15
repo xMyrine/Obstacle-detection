@@ -33,3 +33,5 @@ __pycache__/
 *.ind
 *.bcf
 *.ist
+
+*.DS_Store

@@ -110,14 +110,17 @@ While this is an important step towards robust AI, it does not fully capture the
 
 To address these challenges, this thesis explores the capabilities of self-supervised Vision Transformers, specifically the DINOv3 architecture\cite{siméoni2025dinov3}. We selected this model for its state-of-the-art performance on out-of-distribution benchmarks (as shown in ObjectNet evaluations) and its ability to produce rich semantic representations while being kept frozen. This "frozen" capability allows for substantial computational savings, making the model ideal for efficient \textbf{post-hoc} analysis without the need for extensive fine-tuning.
 
-\section{Contributions}
-\label{intro_sekce}
-The following sections summarize the main contributions of this thesis:
+\section{Goals}
+\label{sec:goals}
+
+The primary objective of this thesis is to analyze DINOv3 internal representations and evaluate their suitability for hierarchical classification. The specific goals are:
 
 \begin{enumerate}
-    \item
-    \item
-    \item
+    \item \textbf{Feature Space Visualization:} To implement a feature extraction pipeline and analyze class separability using PCA and t-SNE dimensionality reduction on datasets such as CIFAR and Oxford-IIIT Pet.
+    
+    \item \textbf{Attention Mechanism Analysis:} To visualize self-attention maps and interpret how the model spatially isolates semantic objects from the background without supervision.
+    
+    \item \textbf{Layer-wise Evolution:} To track the trajectory of [CLS] tokens across network layers, identifying the specific depth where the model begins to separate distinct semantic concepts.
 \end{enumerate}
 
 
@@ -129,20 +132,20 @@ Finally, it explores the emerging concept of hierarchical OOD detection, highlig
 
 \section{Visual Representation Learning}
 \label{sec:rel_representation}
-State-of-the-art computer vision architectures have evolved significantly from traditonal CNNs to more sophisticated models like ViTs.
+State-of-the-art computer vision architectures have evolved significantly from traditional CNNs to more sophisticated models like ViTs.
 
 \subsection{Vision Transformers (ViT)}
 \label{sec:rel_vit}
-Vision Transformers (ViTs)\cite{dosovitskiy2021imageworth16x16words} have revolutionized and dethroned CNNs as the dominant architecture in computer vision. 
+Vision Transformers (ViTs)\cite{dosovitskiy2021imageworth16x16words} have revolutionized and dethroned CNNs as the progressively increasing architecture in computer vision. 
 Unlike CNNs, which process images via local receptive fields and convolutional layers, ViTs leverage the self-attention mechanism from the Transformer architecture\cite{vaswani2023attentionneed} to capture global dependencies in images.
 
 \subsection{Self-Supervised Learning and DINO}
 \label{sec:rel_ssl_dino}
-Training ViTs typically requires massive labeled datasets. To mitigate this, Self-Supervised Learning (SSL) has emerged as a powerful alternative. Methods like DINO (Distillation with No Labels)\cite{caron2021emergingpropertiesselfsupervisedvision} and its successors, DINOv2 and DINOv3\cite{siméoni2025dinov3}\cite{oquab2024dinov2learningrobustvisual}, learn robust features by enforcing consistency between different views of the same image.
+Training ViTs typically requires massive labeled datasets. To mitigate this, Self-Supervised Learning (SSL) has emerged as a powerful alternative. Methods like DINO (Distillation with No Labels)\cite{caron2021emergingpropertiesselfsupervisedvision} and its successors, DINOv2 and DINOv3\cite{siméoni2025dinov3}\cite{oquab2024dinov2learningrobustvisual}, learn robust features by enforcing consistency between different views of the same object.
 
 \section{Out-of-Distribution Detection}
 \label{sec:rel_ood}
-The aim of OOD detection is to safely distinguis between data that the model has seen during training (ID) and data that is novel or anomalous (OOD).
+The aim of OOD detection is to safely distinguish between data that the model has seen during training (ID) and data that is novel or anomalous (OOD).
 
 \subsection{Post-Hoc OOD Methods}
 \label{sec:rel_posthoc}
@@ -150,7 +153,7 @@ Post-hoc OOD detection methods derive anomaly scores directly from a pre-trained
 
 \textbf{Maximum Softmax Probability (MSP):} The fundamental approach proposed by Hendrycks and Gimpel\cite{hendrycks2018baselinedetectingmisclassifiedoutofdistribution} assumes that a classifier's softmax output can be used to gauge uncertainty. Inputs with low maximum softmax probabilities are flagged as OOD, indicating that the model is less confident in its predictions.
 
-\textbf{Distanced based Methods:} 
+\textbf{Distance based Methods:} 
 To mitigate overconfidence, these methods assess the distance of an input's representation from known class distributions.
 Lee at al.\cite{lee2018simpleunifiedframeworkdetecting} proposed using the \textbf{Mahalanobis Distance}, modeling the pre-softmax features of each class as a multivariate Gaussian distribution. An input is flagged as OOD if it lies far from the nearest class centroid in this latent space.
 
@@ -400,7 +403,7 @@ The application of t-SNE yielded a distinct visual improvement over PCA, produci
 \section{Layer-wise Feature Evolution and Trajectory Analysis}
 \label{sec:visualization}
 
-To qualitatively analyze the internal dynamics of the DINOv3 architecture~\cite{siméoni2025dinov3}, we developed a visualization pipeline capable of mapping the high-dimensional latent space of 1024 dimensions into a perceptible 3-dimensional RGB color space. This process, which we refer to as a ``Layer-wise Feature Trajectory,'' allows for the observation of semantic evolution as information propagates from the shallow input layers to the deep semantic layers. The use of PCA to inspect the semantic layout of self-supervised features follows methodologies established in DINO-based research~\cite{siméoni2025dinov3}.
+To qualitatively analyze the internal dynamics of the DINOv3 architecture~\cite{siméoni2025dinov3}, we developed a visualization pipeline capable of mapping the high-dimensional latent space of 1024 dimensions into a 3-dimensional RGB color space. This process, which we refer to as a ``Layer-wise Feature Trajectory,'' allows for the observation of semantic evolution as information propagates from the input layers to the deep semantic layers. The use of PCA to inspect the semantic layout of self-supervised features follows methodologies established in DINO-based research~\cite{siméoni2025dinov3}.
 
 \subsection{Data Extraction and Pre-processing}
 The extraction mechanism relies on registering \textit{forward hooks} within the PyTorch framework. We iterate through the model's architecture to identify the transformer blocks (specifically \texttt{model.encoder.layer}) and intercept the output tensor $O^{(l)}$ at each layer $l \in \{0, \dots, L-1\}$.
@@ -548,9 +551,9 @@ The visualization is constructed as a temporal sequence where each frame represe
 \end{enumerate}
 
 \subsection{Visual Interpretation}
-The resulting videos provide a granular view of the model's internal object segmentation. As the green query box moves over an object, the attention heatmap instantly ``lights up'' the entire semantic entity, demonstrating that the local patches are attending globally to the object they belong to.
+The results provide a granular view of the model's internal object segmentation. As the green query box moves over an object, the attention heatmap instantly ``lights up'' the entire semantic entity, demonstrating that the local patches are attending globally to the object they belong to.
 
-\subsubsection{Semantic Symmetry and Parts}
+\subsubsection{Semantic similarity and Parts}
 In Figure~\ref{fig:british_shorthair}, we observe the model's understanding of facial symmetry and biological features. When the query focuses on one eye, the attention map strongly activates the contralateral eye, linking them as a single semantic concept. Similarly, querying the nose region triggers attention across the whiskers, suggesting the model has learned to group these fine-grained features together.
 
 \begin{figure}[htbp]
@@ -620,6 +623,18 @@ This behavior extends to complex scenes. In the cityscape example (Figure~\ref{f
     \label{fig:city_attention}
 \end{figure}
 
+\chapter{Conclusion}
+\label{conclusion}
+
+This thesis explored whether the DINOv3 Vision Transformer is a suitable foundation for hierarchical image classification and Out-of-Distribution detection. We used several visualization techniques to analyze how the model understands images without being explicitly trained for these tasks.
+
+Our experiments showed that DINOv3 creates very clear groups for natural images. In datasets like CIFAR-10 and Oxford-IIIT Pet, the model successfully keeps similar classes together. The t-SNE visualizations proved that the model is robust enough to handle different artistic styles, as seen in the Pokémon dataset. Additionally, by analyzing the network layer by layer, we confirmed that the model gradually builds understanding, moving from simple pixel patterns to meaningful concepts.
+
+Furthermore, the attention maps revealed that the model naturally understands where objects are. It can isolate a subject from the background and group related parts without any supervision.
+
+However, the model has clear limitations. It failed to separate classes in the SVHN dataset. This confirms that DINOv3 relies heavily on textures rather than geometric shapes. This "texture bias" is an important factor to consider when deploying the model.
+
+In conclusion, the frozen DINOv3 model provides rich and useful features. Future work should focus on using these features to build a system that can not only detect unknown objects but also assign them to a general super-category, making AI systems safer and more interpretable.
 \printbibliography[title=Literature]
 
 \appendix
