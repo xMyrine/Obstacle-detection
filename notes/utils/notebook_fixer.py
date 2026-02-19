@@ -2,8 +2,8 @@ import json
 import os
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-notebook_path = os.path.join(os.path.dirname(script_dir), 'm8_dino_visualisation.ipynb')
-fixed_path = os.path.join(os.path.dirname(script_dir), 'm8_dino_visualisation.ipynb')
+notebook_path = os.path.join(os.path.dirname(script_dir), 'm9_OOD_pairings_scores.ipynb')
+fixed_path = os.path.join(os.path.dirname(script_dir), 'm9_OOD_pairings_scores.ipynb')
 
 try:
     with open(notebook_path, 'r', encoding='utf-8') as f:
