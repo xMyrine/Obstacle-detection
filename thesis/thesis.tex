@@ -662,7 +662,6 @@ Figure~\ref{fig:cat_features} demonstrates the model's ability to distinguish ob
 
 \subsubsection{Scene Segmentation}
 This behavior extends to complex scenes. In the cityscape example (Figure~\ref{fig:city_attention}), querying a patch of sky activates the entire sky region while ignoring the skyline. Conversely, querying a specific skyscraper isolates that building's vertical structure from the surrounding urban clutter, demonstrating unsupervised instance-level discrimination.
-
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.48\textwidth}
@@ -678,6 +677,72 @@ This behavior extends to complex scenes. In the cityscape example (Figure~\ref{f
     \end{subfigure}
     \caption[Cityscape Attention]{(a) Querying the sky activates the atmospheric region only. (b) Querying a specific building isolates that structure from the rest of the city.}
     \label{fig:city_attention}
+\end{figure}
+
+\section{Out-of-Distribution Detection Methods}
+\label{sec:ood_methods}
+
+To evaluate the robustness and generalizability of the learned representations, we conducted a series of Out-of-Distribution (OOD) detection experiments. In this setup, the Food-101 dataset was designated as the In-Distribution (ID) baseline. We then evaluated the model's ability to distinguish these ID samples from three distinct OOD datasets: Oxford-IIIT Pet, FGVC Aircraft, and the Describable Textures Dataset (DTD). To preserve high-frequency visual details crucial for both fine-grained classification and texture recognition, all images were uniformly processed through a $512 \times 512$ resolution pipeline.
+
+\subsection{Linear Probe and Scoring Functions}
+Foundation models such as DINOv3 inherently output high-dimensional feature embeddings rather than class-specific logits. However, several prominent post-hoc OOD detection algorithms operate directly on the logit space of a classifier. To bridge this gap without distorting the pre-trained manifold via full fine-tuning, we trained a simple Linear Probe on top of the frozen DINOv3 embeddings. This yielded the necessary pre-softmax logits for our target ID classes (Food-101).
+
+Using these projections, we evaluated three state-of-the-art OOD scoring mechanisms:
+\begin{itemize}
+    \item \textbf{Energy Score:} Computes the Helmholtz free energy over the logit vector, functioning as a theoretically grounded alternative to the standard softmax confidence.
+    \item \textbf{Mahalanobis Distance:} A generative, distance-based metric that measures the distance of a test sample's feature representation to the closest class-conditional Gaussian distribution fitted on the ID training features.
+    \item \textbf{ODIN (Out-of-DIstribution detector for Neural networks):} Utilizes temperature scaling and input preprocessing (small adversarial perturbations) to separate the softmax distributions of ID and OOD samples.
+\end{itemize}
+
+The primary evaluation metric used was the Area Under the Receiver Operating Characteristic curve (AUROC). Additionally, for qualitative analysis, we set the operating acceptance threshold to maintain a 95\% True Positive Rate (TPR) for ID data.
+
+\subsection{Results and the Semantic Overlap Anomaly}
+The quantitative results demonstrated near-flawless OOD detection performance (AUROC $\approx 1.0$) when comparing Food-101 against the Oxford-IIIT Pet and FGVC Aircraft datasets across all three methods. The representations learned by the network cleanly separated these distinct semantic domains.
+
+However, performance on the Textures dataset (DTD) presented a notable exception, yielding lower AUROC scores and higher False Positive Rates. Upon qualitative investigation, we discovered that this drop in statistical performance does not indicate a failure of the feature representation. Rather, it highlights a semantic overlap between the datasets: the Textures dataset inherently contains images of distinct food patterns (e.g., clustered berries, cross-sections of vegetables, woven pasta). 
+
+Consequently, the models confidently—and correctly, from a semantic standpoint—classified these specific OOD samples as ID (Food). Figure~\ref{fig:ood_false_positives} illustrates the highest-confidence false positives for both the Energy Score and Mahalanobis Distance at the 95\% TPR threshold. It is visually evident that the "misclassified" texture images are, in fact, food items. 
+
+\textit{Note on ODIN Evaluation:} Due to the heavy computational overhead introduced by the iterative gradient-based input perturbations required for ODIN, we evaluated this specific method on a randomly sampled subset of the data. While the resulting ROC curve for ODIN (Figure~\ref{fig:roc_curves}) displays a perfect 100\% AUROC on this specific subset, applying it to the overlapping food-texture samples yields the same semantically justified "failures" observed in the Energy and Mahalanobis methods.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ood_methods/roc_energy.png}
+        \caption{Energy Score}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ood_methods/roc_man_dist.png}
+        \caption{Mahalanobis Distance}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ood_methods/roc_odin.png}
+        \caption{ODIN (Subset)}
+    \end{subfigure}
+    \caption[OOD Detection ROC Curves]{Receiver Operating Characteristic (ROC) curves for OOD detection using Food-101 as the ID dataset. The algorithms achieve flawless separation on Pets and Aircraft, while the variance in the Textures curve is driven by semantic dataset overlap.}
+    \label{fig:roc_curves}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ood_methods/energy_culprits.png}
+        \caption{Energy Score: Highest Confidence False Positives}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ood_methods/man_dist_culprits.png}
+        \caption{Mahalanobis: Highest Confidence False Positives}
+    \end{subfigure}
+    \caption[OOD False Positives (Textures)]{Samples from the OOD Textures dataset misclassified as ID (Food-101) with the highest confidence at a 95\% TPR threshold. The "errors" are technically correct visual assessments, as the images clearly depict food items acting as textures.}
+    \label{fig:ood_false_positives}
 \end{figure}
 
 \chapter{Conclusion}
