@@ -460,6 +460,60 @@ Mathematically, this identifies the three principal components that explain the 
     \label{fig:global_pca_grid}
 \end{figure}
 
+\subsubsection{Method A.1: Global PCA with Mean Subtraction (Centered PCA)}
+
+In standard Principal Component Analysis, it is customary to center the data by subtracting the empirical mean before calculating the covariance matrix. To investigate the effect of this centering on our feature trajectory visualization, we conducted an auxiliary experiment where the global dataset $\mathbf{X}_{global}$ was mean-centered prior to projection:
+
+\begin{equation}
+    \bar{\mathbf{x}} = \frac{1}{N} \sum_{i=1}^{N} \mathbf{x}_{i}, \quad \hat{\mathbf{X}}_{global} = \mathbf{X}_{global} - \bar{\mathbf{x}}
+\end{equation}
+
+where $N$ is the total number of feature vectors across all layers $l$ and spatial positions. The PCA estimator was subsequently fitted on the centered dataset $\hat{\mathbf{X}}_{global}$.
+
+\textbf{Visual Outcome and Analysis:} Contrary to the uncentered Global PCA, applying mean subtraction resulted in a severe degradation of visual clarity. The resulting projections produced dim, desaturated, ``mud-like'' representations with arbitrary blue hues.
+
+This phenomenon can be explained by the geometric behavior of feature maps in deep neural networks. As features are processed from shallow to deep layers, they exhibit a massive directional shift through the high-dimensional space. In the uncentered approach (Method A), the primary principal components naturally align with this dominant drift trajectory, mapping the large magnitudes to bright, distinct RGB values. 
+
+Conversely, when the global mean is subtracted, this primary trajectory vector collapses to the origin. The centered PCA is forced to capture only the localized variance surrounding the global centroid. Because the magnitude of this localized variance is relatively small compared to the scale of the layer-wise drift, the projected values lack the amplitude required to drive the RGB channels to bright values. The overlapping, low-magnitude variances consequently manifest as dark, ambiguous colors, with specific hues (such as blue) dominating only if a particular variance direction aligns heavily with that color channel.
+
+\vfill
+\newpage
+
+
+\begin{figure}[H]
+    \centering
+    % --- TOP ROW ---
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_global_mean0.PNG}
+        \caption{Layer 1 (Early Features)} 
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_global_mean14.PNG}
+        \caption{Layer 16 (Intermediate Features)} 
+    \end{subfigure}
+    
+    \vspace{0.5cm} % Add vertical space between rows
+    
+    % --- BOTTOM ROW ---
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_global_mean24.PNG}
+        \caption{Layer 26 (Deep Features)} 
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_global_mean39.PNG}
+        \caption{Layer 39 (Final Representation)}
+    \end{subfigure}
+    
+    \caption[Centered Global PCA Feature Visualization]{Visualization of feature maps using Global PCA with Mean Subtraction (Method A.1). Because centering collapses the global depth trajectory to the origin, the ``Red-to-Azure'' drift is destroyed. Instead, the PCA captures spatial variance, rendering the correlated background tokens in muddy orange/brown hues while isolating the semantic foreground (the cat) along a distinct blue principal component.}
+    \label{fig:global_pca_grid}
+\end{figure}
+
 \subsubsection{Method B: Local PCA (Contrast Maximization)}
 In the Local approach, we prioritize the maximum statistical separation within a specific layer, disregarding the global context. For each individual layer $l$, we instantiate a new PCA estimator and fit it solely on the features $\mathbf{X}^{(l)}$ of that specific layer.
 
@@ -602,6 +656,9 @@ Figure~\ref{fig:cat_features} demonstrates the model's ability to distinguish ob
     \caption[Attention Segmentation on Cat]{(a) A background patch attends to the surroundings, respecting the object boundary. (b) An ear patch attends to the full head structure. (c) A leg patch attends specifically to the limbs.}
     \label{fig:cat_features}
 \end{figure}
+
+\vfill
+\newpage
 
 \subsubsection{Scene Segmentation}
 This behavior extends to complex scenes. In the cityscape example (Figure~\ref{fig:city_attention}), querying a patch of sky activates the entire sky region while ignoring the skyline. Conversely, querying a specific skyscraper isolates that building's vertical structure from the surrounding urban clutter, demonstrating unsupervised instance-level discrimination.
