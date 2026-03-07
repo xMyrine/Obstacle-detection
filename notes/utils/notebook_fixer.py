@@ -2,8 +2,8 @@ import json
 import os
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-notebook_path = os.path.join(os.path.dirname(script_dir), 'm10_patch_clustering.ipynb')
-fixed_path = os.path.join(os.path.dirname(script_dir), 'm10_patch_clustering.ipynb')
+notebook_path = os.path.join(os.path.dirname(script_dir), 'm11_KNN_histogram_classification.ipynb')
+fixed_path = os.path.join(os.path.dirname(script_dir), 'm11_KNN_histogram_classification.ipynb')
 
 try:
     with open(notebook_path, 'r', encoding='utf-8') as f:
