@@ -214,7 +214,7 @@ To verify this property, we extracted feature embeddings from diverse datasets a
 \label{sec:dataset_selection}
 To evaluate the robustness and generalizability of the features learned by the DINOv3 model, we employed a suite of standard computer vision benchmark datasets, alongside a custom dataset to test domain shifts:
 \begin{itemize}
-    \item \textbf{CIFAR-10} \cite{Krizhevsky2009LearningML}: A widely utilized benchmark consisting of 60,000 $32 \times 32$ color images across 10 distinct classes, with 6,000 images per class. The standard split includes 50,000 training images and 10,000 test images.
+    \item \textbf{CIFAR-10} \cite{Krizhevsky2009LearningML}: A widely utilized benchmark consisting of 60,000 $32 \times 32$ colour images across 10 distinct classes, with 6,000 images per class. The standard split includes 50,000 training images and 10,000 test images.
     \item \textbf{CIFAR-100} \cite{Krizhevsky2009LearningML}: Similar in structure to CIFAR-10 but significantly more challenging due to its fine-grained nature. It contains 100 classes with 600 images each, split into 500 training and 100 testing images per class.
     \item \textbf{SVHN (Street View House Numbers)} \cite{Netzer2011ReadingDI}: A real-world image dataset designed for developing machine learning and object recognition algorithms. It comprises over 600,000 labeled digits ($0-9$) cropped from house numbers in Google Street View imagery, presenting a distinct distribution shift from standard object datasets.
     \item \textbf{Food-101} \cite{bossard2014food}: A large-scale dataset for fine-grained food recognition, consisting of 101,000 images representing 101 different food categories. Each category contains 1,000 images, offering a high variance in visual appearance within classes.
@@ -403,7 +403,7 @@ The application of t-SNE yielded a distinct visual improvement over PCA, produci
 \section{Layer-wise Feature Evolution and Trajectory Analysis}
 \label{sec:visualization}
 
-To qualitatively analyze the internal dynamics of the DINOv3 architecture~\cite{siméoni2025dinov3}, we developed a visualization pipeline capable of mapping the high-dimensional latent space of 1024 dimensions into a 3-dimensional RGB color space. This process, which we refer to as a ``Layer-wise Feature Trajectory,'' allows for the observation of semantic evolution as information propagates from the input layers to the deep semantic layers. The use of PCA to inspect the semantic layout of self-supervised features follows methodologies established in DINO-based research~\cite{siméoni2025dinov3}.
+To qualitatively analyze the internal dynamics of the DINOv3 architecture~\cite{siméoni2025dinov3}, we developed a visualization pipeline capable of mapping the high-dimensional latent space of 1024 dimensions into a 3-dimensional RGB colour space. This process, which we refer to as a ``Layer-wise Feature Trajectory,'' allows for the observation of semantic evolution as information propagates from the input layers to the deep semantic layers. The use of PCA to inspect the semantic layout of self-supervised features follows methodologies established in DINO-based research~\cite{siméoni2025dinov3}.
 
 \subsection{Data Extraction and Pre-processing}
 The extraction mechanism relies on registering \textit{forward hooks} within the PyTorch framework. We iterate through the model's architecture to identify the transformer blocks (specifically \texttt{model.encoder.layer}) and intercept the output tensor $O^{(l)}$ at each layer $l \in \{0, \dots, L-1\}$.
@@ -422,9 +422,9 @@ In the Global approach, we prioritize the temporal and geometric consistency of 
 
 To ensure that feature representations from different depths of the network are geometrically comparable, we compute a single, unified transformation matrix $W_{global}$. This is achieved by fitting the PCA estimator on the aggregated dataset $\mathbf{X}_{global}$, effectively forcing the algorithm to learn a "global dictionary" of variance that encompasses the model's entire inference process—from raw pixel statistics in shallow layers to high-level semantic abstractions in deep layers.
 
-Mathematically, this identifies the three principal components that explain the maximum variance across the \textit{full hierarchy} of the network. Once this fixed basis $W_{global}$ is established, we project the specific feature tensor $\mathbf{X}^{(l)}$ of every individual layer $l$ onto these static axes. By using a constant projection matrix for all layers, we ensure that the resulting color shifts in the visualization represent genuine geometric transformations of the feature vectors (e.g., the data manifold rotating from a "pixel-correlation" subspace to a "semantic" subspace) rather than arbitrary statistical realignments between frames.
+Mathematically, this identifies the three principal components that explain the maximum variance across the \textit{full hierarchy} of the network. Once this fixed basis $W_{global}$ is established, we project the specific feature tensor $\mathbf{X}^{(l)}$ of every individual layer $l$ onto these static axes. By using a constant projection matrix for all layers, we ensure that the resulting colour shifts in the visualization represent genuine geometric transformations of the feature vectors (e.g., the data manifold rotating from a "pixel-correlation" subspace to a "semantic" subspace) rather than arbitrary statistical realignments between frames.
 
-\textbf{Visual Outcome:} This method results in a smooth color progression. We observed a distinct shift from red hues in initial layers to azure/cyan hues in deeper layers. This indicates that the feature subspace occupied by raw visual patterns (shallow layers) is mathematically orthogonal to the subspace of semantic abstractions (deep layers). The color shift effectively visualizes the ``drift'' of the image representation through the high-dimensional space. \textbf{This trajectory is visually summarized in Figure~\ref{fig:global_pca_grid}, where the subject (`Cat') transitions from a pixel-dominated red representation to a semantically abstract azure representation.}
+\textbf{Visual Outcome:} This method results in a smooth colour progression. We observed a distinct shift from red hues in initial layers to azure/cyan hues in deeper layers. This indicates that the feature subspace occupied by raw visual patterns (shallow layers) is mathematically orthogonal to the subspace of semantic abstractions (deep layers). The colour shift effectively visualizes the ``drift'' of the image representation through the high-dimensional space. \textbf{This trajectory is visually summarized in Figure~\ref{fig:global_pca_grid}, where the subject (`Cat') transitions from a pixel-dominated red representation to a semantically abstract azure representation.}
 
 \begin{figure}[htbp]
     \centering
@@ -474,7 +474,7 @@ where $N$ is the total number of feature vectors across all layers $l$ and spati
 
 This phenomenon can be explained by the geometric behavior of feature maps in deep neural networks. As features are processed from shallow to deep layers, they exhibit a massive directional shift through the high-dimensional space. In the uncentered approach (Method A), the primary principal components naturally align with this dominant drift trajectory, mapping the large magnitudes to bright, distinct RGB values. 
 
-Conversely, when the global mean is subtracted, this primary trajectory vector collapses to the origin. The centered PCA is forced to capture only the localized variance surrounding the global centroid. Because the magnitude of this localized variance is relatively small compared to the scale of the layer-wise drift, the projected values lack the amplitude required to drive the RGB channels to bright values. The overlapping, low-magnitude variances consequently manifest as dark, ambiguous colors, with specific hues (such as blue) dominating only if a particular variance direction aligns heavily with that color channel.
+Conversely, when the global mean is subtracted, this primary trajectory vector collapses to the origin. The centered PCA is forced to capture only the localized variance surrounding the global centroid. Because the magnitude of this localized variance is relatively small compared to the scale of the layer-wise drift, the projected values lack the amplitude required to drive the RGB channels to bright values. The overlapping, low-magnitude variances consequently manifest as dark, ambiguous colours, with specific hues (such as blue) dominating only if a particular variance direction aligns heavily with that colour channel.
 
 \vfill
 \newpage
@@ -536,7 +536,7 @@ This renders fine-grained details visible that are otherwise washed out in the G
 
 Therefore, Local PCA acts as a high-gain contrast filter, useful for inspecting the granular attention mechanisms of specific blocks without the bias of the network's overall depth trajectory.
 
-\textbf{Visual Outcome:} This results in visualizations with maximum local contrast, highlighting the most salient features such as edges and textures at every specific depth. However, this method sacrifices temporal consistency. Because the eigenvectors are re-calculated at every step, the direction of the principal components can flip arbitrarily (the \textit{sign ambiguity} problem in PCA). This manifests as abrupt, non-semantic color inversions between consecutive layers, making it difficult to track the evolution of a specific concept. \textbf{The effect of this local contrast maximization is shown in Figure~\ref{fig:local_pca_grid}. While fine-grained details are visible, the colors hold no global meaning, changing primarily due to statistical variations within the layer rather than semantic evolution.}
+\textbf{Visual Outcome:} This results in visualizations with maximum local contrast, highlighting the most salient features such as edges and textures at every specific depth. However, this method sacrifices temporal consistency. Because the eigenvectors are re-calculated at every step, the direction of the principal components can flip arbitrarily (the \textit{sign ambiguity} problem in PCA). This manifests as abrupt, non-semantic colour inversions between consecutive layers, making it difficult to track the evolution of a specific concept. \textbf{The effect of this local contrast maximization is shown in Figure~\ref{fig:local_pca_grid}. While fine-grained details are visible, the colours hold no global meaning, changing primarily due to statistical variations within the layer rather than semantic evolution.}
 
 \begin{figure}[htbp]
     \centering
@@ -557,12 +557,10 @@ Therefore, Local PCA acts as a high-gain contrast filter, useful for inspecting 
     
     \vspace{0.5cm} % Add vertical space between rows
     
-    % --- BOTTOM ROW ---
     \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/pca_attention_visualisation/cat_layer_local26.PNG}
         \caption{Layer 26 (Deep Features)} 
-        % Changed from "Semantic Space" because the color doesn't indicate the space
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.48\textwidth}
@@ -682,28 +680,28 @@ This behavior extends to complex scenes. In the cityscape example (Figure~\ref{f
 \section{Out-of-Distribution Detection Methods}
 \label{sec:ood_methods}
 
-To evaluate the robustness and generalizability of the learned representations, we conducted a series of Out-of-Distribution (OOD) detection experiments. In this setup, the Food-101 dataset was designated as the In-Distribution (ID) baseline. We then evaluated the model's ability to distinguish these ID samples from three distinct OOD datasets: Oxford-IIIT Pet, FGVC Aircraft, and the Describable Textures Dataset (DTD). To preserve high-frequency visual details crucial for both fine-grained classification and texture recognition, all images were uniformly processed through a $512 \times 512$ resolution pipeline.
+To evaluate the robustness and generalizability of the learned representations, we conducted a series of OOD detection experiments. In this setup, the Food-101 dataset was designated as the In-Distribution (ID) baseline. We then evaluated the model's ability to distinguish these ID samples from three distinct OOD datasets: Oxford-IIIT Pet, FGVC Aircraft, and the Describable Textures Dataset (DTD). To preserve high-frequency visual details crucial for both fine-grained classification and texture recognition, all images were uniformly processed through a $512 \times 512$ resolution pipeline.
 
 \subsection{Linear Probe and Scoring Functions}
 Foundation models such as DINOv3 inherently output high-dimensional feature embeddings rather than class-specific logits. However, several prominent post-hoc OOD detection algorithms operate directly on the logit space of a classifier. To bridge this gap without distorting the pre-trained manifold via full fine-tuning, we trained a simple Linear Probe on top of the frozen DINOv3 embeddings. This yielded the necessary pre-softmax logits for our target ID classes (Food-101).
 
 Using these projections, we evaluated three state-of-the-art OOD scoring mechanisms:
 \begin{itemize}
-    \item \textbf{Energy Score:} Computes the Helmholtz free energy over the logit vector, functioning as a theoretically grounded alternative to the standard softmax confidence.
-    \item \textbf{Mahalanobis Distance:} A generative, distance-based metric that measures the distance of a test sample's feature representation to the closest class-conditional Gaussian distribution fitted on the ID training features.
-    \item \textbf{ODIN (Out-of-DIstribution detector for Neural networks):} Utilizes temperature scaling and input preprocessing (small adversarial perturbations) to separate the softmax distributions of ID and OOD samples.
+    \item \textbf{Energy Score \cite{liu2021energybasedoutofdistributiondetection}:} Computes the Helmholtz free energy over the logit vector, functioning as a theoretically grounded alternative to the standard softmax confidence.
+    \item \textbf{Mahalanobis Distance \cite{lee2018simpleunifiedframeworkdetecting}:} A generative, distance-based metric that measures the distance of a test sample's feature representation to the closest class-conditional Gaussian distribution fitted on the ID training features.
+    \item \textbf{ODIN (Out-of-DIstribution detector for Neural networks) \cite{liang2020enhancingreliabilityoutofdistributionimage}:} Utilizes temperature scaling and input preprocessing (small adversarial perturbations) to separate the softmax distributions of ID and OOD samples.
 \end{itemize}
 
 The primary evaluation metric used was the Area Under the Receiver Operating Characteristic curve (AUROC). Additionally, for qualitative analysis, we set the operating acceptance threshold to maintain a 95\% True Positive Rate (TPR) for ID data.
 
 \subsection{Results and the Semantic Overlap Anomaly}
-The quantitative results demonstrated near-flawless OOD detection performance (AUROC $\approx 1.0$) when comparing Food-101 against the Oxford-IIIT Pet and FGVC Aircraft datasets across all three methods. The representations learned by the network cleanly separated these distinct semantic domains.
+The quantitative results, visualized in the Receiver Operating Characteristic (ROC) curves in Figure~\ref{fig:roc_curves}, demonstrated near-flawless OOD detection performance (AUROC $\approx 1.0$) when comparing Food-101 against the Oxford-IIIT Pet and FGVC Aircraft datasets across all three methods. The steep, right-angled trajectories for these datasets confirm that the representations learned by the network cleanly separated these distinct semantic domains.
 
-However, performance on the Textures dataset (DTD) presented a notable exception, yielding lower AUROC scores and higher False Positive Rates. Upon qualitative investigation, we discovered that this drop in statistical performance does not indicate a failure of the feature representation. Rather, it highlights a semantic overlap between the datasets: the Textures dataset inherently contains images of distinct food patterns (e.g., clustered berries, cross-sections of vegetables, woven pasta). 
+However, as evident from the visibly sagging curves in Figure~\ref{fig:roc_curves}, performance on the Textures dataset (DTD) presented a notable exception, yielding lower AUROC scores and higher False Positive Rates. Upon qualitative investigation, we discovered that this drop in statistical performance does not indicate a failure of the feature representation. Rather, it highlights a semantic overlap between the datasets: the Textures dataset inherently contains images of distinct food patterns (e.g., clustered berries, cross-sections of vegetables, woven pasta). 
 
-Consequently, the models confidently—and correctly, from a semantic standpoint—classified these specific OOD samples as ID (Food). Figure~\ref{fig:ood_false_positives} illustrates the highest-confidence false positives for both the Energy Score and Mahalanobis Distance at the 95\% TPR threshold. It is visually evident that the "misclassified" texture images are, in fact, food items. 
+Consequently, the models confidently---and correctly, from a semantic standpoint---classified these specific OOD samples as ID (Food). To investigate this behavior, we extracted the highest-confidence false positive samples for both the Energy Score and Mahalanobis Distance at the 95\% TPR threshold, presented in Figure~\ref{fig:ood_false_positives}. It is visually evident from these visual samples that the ``misclassified'' texture images are, in fact, food items. 
 
-\textit{Note on ODIN Evaluation:} Due to the heavy computational overhead introduced by the iterative gradient-based input perturbations required for ODIN, we evaluated this specific method on a randomly sampled subset of the data. While the resulting ROC curve for ODIN (Figure~\ref{fig:roc_curves}) displays a perfect 100\% AUROC on this specific subset, applying it to the overlapping food-texture samples yields the same semantically justified "failures" observed in the Energy and Mahalanobis methods.
+\textit{Note on ODIN Evaluation:} Due to the heavy computational overhead introduced by the iterative gradient-based input perturbations required for ODIN, we evaluated this specific method on a randomly sampled subset of the data. While the resulting ROC curve for ODIN (Figure~\ref{fig:roc_curves}c) displays a perfect 100\% AUROC on this specific subset, applying it to the overlapping food-texture samples yields the same semantically justified ``failures'' observed in the Energy and Mahalanobis methods.
 
 \begin{figure}[htbp]
     \centering
@@ -724,7 +722,7 @@ Consequently, the models confidently—and correctly, from a semantic standpoint
         \includegraphics[width=\textwidth]{figures/ood_methods/roc_odin.png}
         \caption{ODIN (Subset)}
     \end{subfigure}
-    \caption[OOD Detection ROC Curves]{Receiver Operating Characteristic (ROC) curves for OOD detection using Food-101 as the ID dataset. The algorithms achieve flawless separation on Pets and Aircraft, while the variance in the Textures curve is driven by semantic dataset overlap.}
+    \caption[OOD Detection ROC Curves]{Receiver Operating Characteristic (ROC) curves for OOD detection using Food-101 as the ID dataset. The algorithms achieve flawless separation on Pets and Aircraft (steep curves), while the variance in the Textures curve is driven by semantic dataset overlap.}
     \label{fig:roc_curves}
 \end{figure}
 
@@ -741,9 +739,63 @@ Consequently, the models confidently—and correctly, from a semantic standpoint
         \includegraphics[width=\textwidth]{figures/ood_methods/man_dist_culprits.png}
         \caption{Mahalanobis: Highest Confidence False Positives}
     \end{subfigure}
-    \caption[OOD False Positives (Textures)]{Samples from the OOD Textures dataset misclassified as ID (Food-101) with the highest confidence at a 95\% TPR threshold. The "errors" are technically correct visual assessments, as the images clearly depict food items acting as textures.}
+    \caption[OOD False Positives (Textures)]{Samples from the OOD Textures dataset misclassified as ID (Food-101) with the highest confidence at a 95\% TPR threshold. The ``errors'' are technically correct visual assessments, as the images clearly depict food items acting as textures.}
     \label{fig:ood_false_positives}
 \end{figure}
+
+\vfill
+\newpage
+
+\section{K-Means Clustering of Patch Representations}
+\label{sec:kmeans_clustering}
+
+% ---------------------------------------------------------
+\subsection{Experimental Setup and Feature Extraction}
+\label{sec:kmeans_setup}
+% ---------------------------------------------------------
+In order to investigate the localized semantic representations learned by the DINOv3 model, an unsupervised clustering approach was applied to individual image patches. High-resolution images of various mammals were selected to determine whether the model captures structural and semantic consistencies across different species within the same biological class. To ensure uniform processing, all input images were scaled to a standardized resolution of $512 \times 512$ pixels.
+
+The DINOv3 vision transformer processes each image by subdividing it into non-overlapping patches of size $16 \times 16$ pixels. For each patch, a high-dimensional feature vector was extracted from the deeper layers of the model. 
+
+% ---------------------------------------------------------
+\subsection{Clustering Methodology}
+\label{sec:kmeans_methodology}
+% ---------------------------------------------------------
+To group these dense feature vectors into distinct visual concepts, the K-Means clustering algorithm was utilized. The optimal number of clusters, denoted as $K$, was systematically determined using the Elbow method \cite{Kodinariya2013ReviewOD}, which evaluates the explained variance as a function of the number of clusters (depicted in Figure~\ref{fig:elbow_method}).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/clustering/elbow_method_no_crop.png} 
+    \caption[Composite K-Means clustering analysis for mammals]{Elbow method for determining the optimal number of clusters $K$ in the K-Means algorithm applied to DINOv3 patch representations. The plot illustrates the within-cluster sum of squares (WCSS) as a function of $K$, with a inflection point observed at $K=6$, indicating that this is the optimal number of clusters for capturing the underlying structure in the feature space.}
+    \label{fig:elbow_method}
+\end{figure}
+
+Following the clustering phase, a discrete visual representation was constructed by mapping each patch to a specific colour corresponding to its assigned cluster centroid. A comprehensive composite figure (Figure~\ref{fig:kmeans_composite}) was generated to contrast the original images directly with their corresponding cluster-coloured patch maps, allowing for an evaluation of the feature distributions.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/clustering/clustering_no_crop.png} 
+    \caption[Composite K-Means clustering analysis for mammals]{Comprehensive K-Means clustering analysis for DINOv3 patch representations. This composite illustrates the Elbow method used to determine the optimal $K$, alongside side-by-side comparisons of the original $512 \times 512$ mammal images with their $16 \times 16$ cluster maps. It highlights the isolation of high-frequency textural patterns in zebras into a distinct cluster, as well as the differentiation of terrain features (e.g., grassy terrains in pink versus non-grassy surfaces in dark blue).}
+    \label{fig:kmeans_composite}
+\end{figure}
+
+% ---------------------------------------------------------
+\subsection{Spatial Shifts and Positional Encodings}
+\label{sec:kmeans_spatial}
+% ---------------------------------------------------------
+A notable phenomenon observed in the resulting visual maps is a discernible spatial shift in the cluster assignments, where patches appear slightly offset to the left or right relative to the structural boundaries in the original image. Furthermore, the clustering algorithm explicitly differentiates between the background space on the left side of the subject and the background on the right. 
+
+This behavior is directly attributable to the positional encodings inherent to the Vision Transformer architecture. Because the standard self-attention mechanism is inherently permutation-invariant, Transformers inject spatial awareness by adding positional embeddings to the patch tokens early in the network. These embeddings are frequently constructed using harmonic functions---specifically intersecting sine and cosine waves of varying frequencies---or learned spatial biases. Consequently, the extracted feature tokens heavily retain this spatial metadata. The K-Means algorithm, computing distances in this combined feature space, therefore partitions the patches not only by their semantic visual content but also by their absolute spatial coordinates within the frame.
+
+% ---------------------------------------------------------
+\subsection{Semantic Groupings and Terrain Analysis}
+\label{sec:kmeans_semantic}
+% ---------------------------------------------------------
+Beyond spatial partitioning, the cluster maps reveal highly specialized semantic groupings. The foreground animal shapes are clearly segmented from the background, and the background itself is further divided into vertical boundaries and the underlying floor or terrain. 
+
+An interesting anomaly was observed in images containing zebras, which predominantly formed an isolated cluster. As highlighted in the composite visualization (Figure~\ref{fig:kmeans_composite}), we hypothesize that this divergence occurs because the zebra images frequently feature a herd or multiple intersecting animals, creating a complex, high-frequency textural pattern that the model maps differently compared to the single-subject compositions of other mammals.
+
+Additionally, the representations demonstrate a strong dependency on the underlying terrain upon which the subjects are standing. The clustering algorithm successfully decoupled different floor textures, consistently assigning grassy terrains to a specific cluster, denoted by a pink hue in the visualization, while non-grassy or barren surfaces were segregated into a separate cluster, represented in dark blue. This distinction is visually evident in the overall mappings (Figure~\ref{fig:kmeans_composite}), highlighting the capacity of DINOv3 to simultaneously encode intricate local textures, broad environmental contexts, and spatial priors within its patch-level representations.
 
 \chapter{Conclusion}
 \label{conclusion}
