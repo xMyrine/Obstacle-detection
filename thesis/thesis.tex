@@ -1,4 +1,4 @@
-\documentclass[twoside]{ctuthesis}
+\documentclass[oneside]{ctuthesis}
 
 \usepackage[unicode]{hyperref}
 \usepackage{listings}
@@ -796,6 +796,26 @@ Beyond spatial partitioning, the cluster maps reveal highly specialized semantic
 An interesting anomaly was observed in images containing zebras, which predominantly formed an isolated cluster. As highlighted in the composite visualization (Figure~\ref{fig:kmeans_composite}), we hypothesize that this divergence occurs because the zebra images frequently feature a herd or multiple intersecting animals, creating a complex, high-frequency textural pattern that the model maps differently compared to the single-subject compositions of other mammals.
 
 Additionally, the representations demonstrate a strong dependency on the underlying terrain upon which the subjects are standing. The clustering algorithm successfully decoupled different floor textures, consistently assigning grassy terrains to a specific cluster, denoted by a pink hue in the visualization, while non-grassy or barren surfaces were segregated into a separate cluster, represented in dark blue. This distinction is visually evident in the overall mappings (Figure~\ref{fig:kmeans_composite}), highlighting the capacity of DINOv3 to simultaneously encode intricate local textures, broad environmental contexts, and spatial priors within its patch-level representations.
+
+\section{K-Means Clustering on Foreground-Isolated Patch Representations}
+\label{sec:kmeans_cropped_clustering}
+
+\subsection{Motivation and Foreground segmentation}
+\label{sec:kmeans_cropped_motivation}
+As observed in the previous uncropped clustering analysis (Section~\ref{sec:kmeans_clustering}), the DINOv3 representations exhibit a strong spatial bias due to the positional encodings such as terrain and exhibits a tendency to cluster based on background features. To evaluate the model's capacity to represent purely object-centric semantic features independent of their background noise and absolute spatial coordinates, we performed a secondary clustering analysis on a cropped version of the dataset.
+
+To achieve this, a Logistic Regression classifier was trained to act as a binary foreground-background segmentation module. By leveraging the deep features extracted from DINOv3, the linear model was optimized to precict binary mask. By leveraging the deep features extracted from DINOv3, the model was optimized to effectively distinguish the animal foreground from the surrounding environment. The $512 \times $512 images were subsequently masked and tightly cropped as illustrated in Figure~\ref{fig:cropped_clustering_composite}.
+
+Following the foreground isolation, the standardized cropping pipeline resized the resulting images back to the uniform resolution required by the Vision Transformer. The DINOv3 model then processed these object-centric images, extracting $16 \times 16$ patch tokens exclusively from the anatomical features of the animals. 
+
+The K-Means clustering algorithm was applied to this filtered subset of high-dimensional feature vectors. Because the variance introduced by diverse backgrounds (e.g., grass, barren terrain, and sky) was eliminated, the optimal number of clusters, $K$, was re-evaluated using the Elbow method. Without the need to allocate cluster centroids to environmental textures, the algorithm was forced to partition the feature space based strictly on the morphological and textural variations of the animals themselves.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/clustering/elbow_method_cropped.png} 
+    \caption[Elbow method for foreground-isolated clustering]{Elbow method evaluation for K-Means clustering applied to foreground-isolated DINOv3 patch representations. The removal of background features alters the within-cluster sum of squares (WCSS) trajectory, reflecting a purely object-centric latent space.}
+    \label{fig:elbow_method_cropped}
+\end{figure}
 
 \chapter{Conclusion}
 \label{conclusion}
