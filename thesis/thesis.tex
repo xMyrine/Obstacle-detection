@@ -804,7 +804,7 @@ Additionally, the representations demonstrate a strong dependency on the underly
 \label{sec:kmeans_cropped_motivation}
 As observed in the previous uncropped clustering analysis (Section~\ref{sec:kmeans_clustering}), the DINOv3 representations exhibit a strong spatial bias due to the positional encodings such as terrain and exhibits a tendency to cluster based on background features. To evaluate the model's capacity to represent purely object-centric semantic features independent of their background noise and absolute spatial coordinates, we performed a secondary clustering analysis on a cropped version of the dataset.
 
-To achieve this, a Logistic Regression classifier was trained to act as a binary foreground-background segmentation module. By leveraging the deep features extracted from DINOv3, the linear model was optimized to precict binary mask. By leveraging the deep features extracted from DINOv3, the model was optimized to effectively distinguish the animal foreground from the surrounding environment. The $512 \times $512 images were subsequently masked and tightly cropped as illustrated in Figure~\ref{fig:cropped_clustering_composite}.
+To achieve this, a Logistic Regression classifier was trained to act as a binary foreground-background segmentation module. By leveraging the deep features extracted from DINOv3, the linear model was optimized to precict binary mask. By leveraging the deep features extracted from DINOv3, the model was optimized to effectively distinguish the animal foreground from the surrounding environment. The $512 \times $512 images were subsequently masked and tightly cropped.
 
 Following the foreground isolation, the standardized cropping pipeline resized the resulting images back to the uniform resolution required by the Vision Transformer. The DINOv3 model then processed these object-centric images, extracting $16 \times 16$ patch tokens exclusively from the anatomical features of the animals. 
 
@@ -815,6 +815,63 @@ The K-Means clustering algorithm was applied to this filtered subset of high-dim
     \includegraphics[width=1.0\textwidth]{figures/clustering/elbow_method_cropped.png} 
     \caption[Elbow method for foreground-isolated clustering]{Elbow method evaluation for K-Means clustering applied to foreground-isolated DINOv3 patch representations. The removal of background features alters the within-cluster sum of squares (WCSS) trajectory, reflecting a purely object-centric latent space.}
     \label{fig:elbow_method_cropped}
+\end{figure}
+
+% ---------------------------------------------------------
+\subsection{Alleviation of Spatial Bias and Anatomical Groupings}
+\label{sec:kmeans_cropped_results}
+% ---------------------------------------------------------
+To further evaluate the robustness and generalization of the learned semantic representations, the dataset was expanded beyond mammalian subjects to include a broader taxonomy of animals. Additionally, an image of an inanimate object—a car—was introduced to the pipeline to determine whether the Vision Transformer perceives structural compositions of non-biological entities in a visually analogous manner. 
+
+An analysis of the resulting cluster-coloured patch maps reveals a highly consistent anatomical and spatial segmentation across the diverse subjects. By visualizing the optimal $K=6$ clusters, we observe that the K-Means algorithm partitioned the feature space into distinct, localized semantic concepts:
+\begin{itemize}
+    \item \textbf{Cluster 4 (Yellow):} Predominantly encapsulates the heads or facial structures of the animals.
+    \item \textbf{Cluster 1 (Green):} Isolates the lower extremities and legs.
+    \item \textbf{Cluster 2 (Purple):} Maps to the central torso or main body mass.
+    \item \textbf{Cluster 5 (Azure):} Outlines the general silhouette or structural shape boundaries of the subject.
+    \item \textbf{Cluster 0 \& Cluster 3 (Pink):} Despite the tight foreground cropping, residual spatial awareness dictates the background representation, with Cluster 0 consistently mapping to the left side of the background and Cluster 3 (pink) mapping to the right side.
+\end{itemize}
+
+These mappings, illustrated in Figure~\ref{fig:kmeans_composite_cropped}, demonstrate the algorithm's capacity to perform zero-shot anatomical segmentation by grouping features such as fur textures, facial structures, and extremities into distinct semantic clusters.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/clustering/clustering_crop.png} 
+    \caption[Composite K-Means clustering on cropped subjects]{Composite K-Means clustering analysis for foreground-isolated patches across a diverse set of animals and a car. The visualization highlights the consistent semantic grouping of anatomical parts (e.g., heads in yellow, legs in green, bodies in purple) and the residual left-right spatial partitioning in the background.}
+    \label{fig:kmeans_composite_cropped}
+\end{figure}
+
+% ---------------------------------------------------------
+\subsection{Feature Distribution and Histogram Analysis}
+\label{sec:kmeans_histogram_analysis}
+% ---------------------------------------------------------
+Following the establishment of this localized visual dictionary, we sought to quantify the overall semantic composition of each image. Rather than treating an image as a spatial grid of patches, it was abstracted into a "Bag of Visual Words" by computing the frequency distribution of its assigned cluster labels. 
+
+To ensure fair comparability across images that may vary slightly in their total number of extracted patches due to cropping dimensions, the raw frequency histograms were subjected to $L_1$ normalization. Let $c_i$ represent the raw count of patches assigned to the $i$-th cluster. The normalized bin value, $h_i$, is calculated as:
+\begin{equation}
+    h_i = \frac{c_i}{\sum_{j} c_j}
+\end{equation}
+This normalization ensures that the sum of all bins in the histogram equals $1$, effectively converting the cluster counts into a discrete probability distribution that represents the proportional semantic makeup of the image (depicted in Figure~\ref{fig:cluster_histograms}).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/clustering/histograms_clusters_animals.png}
+    \caption[$L_1$-normalized cluster histograms]{$L_1$-normalized frequency histograms of patch clusters for the analyzed subjects. Each bar represents the proportional area of the image occupied by a specific semantic concept (e.g., body, head, legs).}
+    \label{fig:cluster_histograms}
+\end{figure}
+
+To mathematically assess the similarity between these diverse feature distributions, the Chi-Square ($\chi^2$) distance metric was employed. The $\chi^2$ distance is highly effective for comparing frequency histograms and is defined for two normalized histograms $x$ and $y$ as:
+\begin{equation}
+    \chi^2(x, y) = \frac{1}{2} \sum_{i} \frac{(x_i - y_i)^2}{x_i + y_i}
+\end{equation}
+
+The pairwise distances between all subjects were computed and are visualized in Figure~\ref{fig:chi_square_comparison}. A notable, albeit counterintuitive, observation derived from this matrix is the relative proximity of the car's feature distribution to those of the biological animals. While a car inherently lacks biological anatomy, its fundamental compositional structure—possessing a defined "head" (front fascia/hood), a "body" (cabin), and "legs" (wheels)—is mapped into the DINOv3 latent space in a manner that yields a remarkably similar normalized cluster distribution. This suggests that the model's deeper representations capture broad topological and structural hierarchies that transcend strict biological boundaries.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/clustering/chi_square_animals_cropped.png}
+    \caption[Chi-Square distance matrix for cluster distributions]{Pairwise Chi-Square ($\chi^2$) distance matrix comparing the $L_1$-normalized cluster histograms of different subjects. Lower values indicate higher distributional similarity. Notably, the metric demonstrates a structural affinity between the car and several animal subjects.}
+    \label{fig:chi_square_comparison}
 \end{figure}
 
 \chapter{Conclusion}
