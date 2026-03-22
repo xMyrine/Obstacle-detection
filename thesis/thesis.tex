@@ -910,7 +910,7 @@ Our evaluation was conducted using the Caltech-101 dataset. To rigorously assess
 \begin{enumerate}
     \item \textbf{Original Images:} The standard Caltech-101 images without any spatial modification.
     \item \textbf{Cropped Foreground Segmentation:} Images segmented to isolate the foreground object, with the background replaced by zero-value (black) pixels and zoomed in. This serves as a baseline to evaluate the impact of masking out background context.
-    \item \textbf{Foreground-Only Patches:} A refined approach where only the specific patches containing the foreground object are extracted and passed to the clustering pipeline. Unlike the benchmark segmentation, this method completely omits any patches consisting solely of blank black regions.
+    \item \textbf{Filtered Object Patches:} A sparse extraction approach where only the specific visual patches overlapping with the foreground object mask are retained and passed to the clustering pipeline. Unlike the cropped segmentation approach—which processes the entire rectangular bounding box and inherently includes blank background patches—this method strictly filters out non-object patches. This ensures the resulting histograms are constructed exclusively from the semantic features of the object itself, without being skewed by uniform background regions.
 \end{enumerate}
 
 \subsection{Results on Original Images}
@@ -926,7 +926,7 @@ Figure \ref{fig:results_matrix_orig_chisq} presents the complete accuracy matrix
     \centering
     % Update with your actual figure path
     \includegraphics[width=0.8\textwidth]{figures/knn_no_ood_benchmarks/chi_full_matrix.png}
-    \caption{Classification accuracy matrix for Original images using Chi-Square distance across varying vocabulary sizes ($K$) and neighborhood counts ($k$).}
+    \caption[Classification accuracy matrix Chi-Square]{Classification accuracy matrix for Original images using Chi-Square distance across varying vocabulary sizes ($K$) and neighborhood counts ($k$).}
     \label{fig:results_matrix_orig_chisq}
 \end{figure}
 
@@ -935,7 +935,7 @@ Similarly, Figure \ref{fig:results_matrix_orig_tfidf} visualizes the performance
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/knn_no_ood_benchmarks/tdidf_full_matrix.png}
-    \caption{Classification accuracy matrix for Original images using TF-IDF with Cosine Similarity. Note that $K=16$ was omitted as the low vocabulary size lacked sufficient granularity for meaningful TF-IDF weighting.}
+    \caption[Classification accuracy matrix TD-IDF]{Classification accuracy matrix for Original images using TF-IDF with Cosine Similarity. Note that $K=16$ was omitted as the low vocabulary size lacked sufficient granularity for meaningful TF-IDF weighting.}
     \label{fig:results_matrix_orig_tfidf}
 \end{figure}
 
@@ -947,15 +947,61 @@ Finally, to gain qualitative insight into the failure modes of our baseline mode
     \centering
     % Update with your actual figure path for Chi-Square failures
     \includegraphics[width=0.95\textwidth]{figures/knn_no_ood_benchmarks/chi_square_fail.png}
-    \caption{Qualitative analysis of K-NN failure cases on Original images using the Chi-Square distance ($K=256$). The columns show, from left to right: (1) the original query image, (2) the query image colored by cluster ID assignment, (3) the retrieved closest training neighbor, and (4) the training neighbor colored by cluster ID.}
+    \caption[Analysis of K-NN failure cases Chi-Square]{Qualitative analysis of K-NN failure cases on Original images using the Chi-Square distance ($K=256$). The columns show, from left to right: (1) the original query image, (2) the query image colored by cluster ID assignment, (3) the retrieved closest training neighbor, and (4) the training neighbor colored by cluster ID.}
     \label{fig:failures_original_k256_chisq}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{figures/knn_no_ood_benchmarks/tdidf_fail.png}
-    \caption{Qualitative analysis of K-NN failure cases on Original images using TF-IDF with Cosine Similarity ($K=256$). The columns show, from left to right: (1) the original query image, (2) the query image colored by cluster ID assignment, (3) the retrieved closest training neighbor, and (4) the training neighbor colored by cluster ID. Note the semantic misclassification of a \textit{Faces} sample as \textit{Faces\_easy}.}
+    \caption[Analysis of K-NN failure cases TF-IDF]{Qualitative analysis of K-NN failure cases on Original images using TF-IDF with Cosine Similarity ($K=256$). The columns show, from left to right: (1) the original query image, (2) the query image colored by cluster ID assignment, (3) the retrieved closest training neighbor, and (4) the training neighbor colored by cluster ID. Note the semantic misclassification of a \textit{Faces} sample as \textit{Faces\_easy}.}
     \label{fig:failures_original_k256_tfidf}
+\end{figure}
+
+\vfill
+\newpage
+
+\subsection{Results on Cropped Foreground Segmentation}
+\label{sec:knn_classification_results_cropped}
+
+In this subsection, we evaluate the classification performance on a modified version of the dataset where the images were segmented to isolate the foreground objects. Pixels identified as background by our logistic regression model were replaced with zero-value (black) pixels, and the bounding boxes were subsequently cropped and zoomed to center the remaining object. 
+
+Figure \ref{fig:foreground_segmentation_examples} provides a visualization of this preprocessing step. While the logistic regression model performed fairly well at isolating the primary subjects, it occasionally cut off minor structural details of the objects—such as slight occlusions on the subjects' faces or extremities.
+
+\begin{figure}[htbp]
+    \centering
+    % Update with your actual figure path
+    \includegraphics[width=0.95\textwidth]{figures/knn_no_ood_benchmarks/cropped_random_class.png}
+    \caption[Foreground Segmentation Examples]{Examples of the cropped foreground segmentation. The logistic regression effectively masks the background with black pixels, though minor segmentation artifacts are visible, such as the slight clipping on the face in the provided examples.}
+    \label{fig:foreground_segmentation_examples}
+\end{figure}
+
+Assessably, the application of this foreground masking resulted in a slightly degraded overall classification accuracy across our K-NN experiments when compared to the original, unmodified images. This performance drop can be attributed to two primary factors. Firstly, the aforementioned segmentation inaccuracies occasionally discarded object features, depriving the histograms of semantic visual words. Secondly, the complete removal of the background eliminates critical environmental context. In many visual classification tasks, the background acts as a strong contextual prior; the surrounding environment often dictates the probability of a specific object's presence. By forcing the classifier to rely strictly on the morphology of the object without its environmental cues, the model becomes more susceptible to confusing structurally similar objects that would otherwise be easily distinguished by their differing natural habitats or surrounding contexts.
+
+Despite the slight drop in peak accuracy, the general convergence trends remained consistent with the baseline experiments. To provide a comprehensive overview of the classifier's behavior under this dataset modification, Figures \ref{fig:matrix_cropped_chisq}, \ref{fig:matrix_cropped_hellinger}, and \ref{fig:matrix_cropped_tfidf} present the full plotting matrices for the Chi-Square distance, FAISS L2 Hellinger distance, and TF-IDF with Cosine Similarity, respectively. As before, the metrics were evaluated across the full spectrum of vocabulary sizes ($K$) and neighborhood counts ($k$).
+
+\begin{figure}[htbp]
+    \centering
+    % Update with your actual figure path
+    \includegraphics[width=0.8\textwidth]{figures/knn_no_ood_benchmarks/cropped_chi_full_matrix.png}
+    \caption[Cropped Images: Chi-Square Accuracy]{Classification accuracy matrix for Cropped Foreground images using the Chi-Square distance across varying vocabulary sizes ($K$) and neighborhood counts ($k$).}
+    \label{fig:matrix_cropped_chisq}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    % Update with your actual figure path
+    \includegraphics[width=0.8\textwidth]{figures/knn_no_ood_benchmarks/cropped_faiss_full_matrix.png}
+    \caption[Cropped Images: Hellinger Distance Accuracy]{Classification accuracy matrix for Cropped Foreground images using the FAISS L2 Hellinger distance.}
+    \label{fig:matrix_cropped_hellinger}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    % Update with your actual figure path
+    \includegraphics[width=0.8\textwidth]{figures/knn_no_ood_benchmarks/cropped_tfidf_full_matrix.png}
+    \caption[Cropped Images: TF-IDF Accuracy]{Classification accuracy matrix for Cropped Foreground images using TF-IDF with Cosine Similarity.}
+    \label{fig:matrix_cropped_tfidf}
 \end{figure}
 
 \chapter{Conclusion}
