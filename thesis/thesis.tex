@@ -101,7 +101,7 @@ Deep learning architectures are currently experiencing a substantial surge in pr
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/yolo_sign_failure.jpg}
-    \caption[YOLO detection limitations on traffic signs]{Limitations of a standard YOLO detector. The model fails to recognize the nearest `No Parking' sign (False Negative) while misclassifying distant ones as `Stop Signs'. This illustrates the necessity for robust feature representations.}
+    \caption[YOLO detection limitations on traffic signs]{Limitations of a standard You Only Look Once (YOLO) detector. The model fails to recognize the nearest `No Parking' sign (False Negative) while misclassifying distant ones as `Stop Signs'. This illustrates the necessity for robust feature representations.}
     \label{fig:yolo_fail}
 \end{figure}
 
@@ -793,7 +793,7 @@ This behavior is directly attributable to the positional encodings inherent to t
 % ---------------------------------------------------------
 Beyond spatial partitioning, the cluster maps reveal highly specialized semantic groupings. The foreground animal shapes are clearly segmented from the background, and the background itself is further divided into vertical boundaries and the underlying floor or terrain. 
 
-An interesting anomaly was observed in images containing zebras, which predominantly formed an isolated cluster. As highlighted in the composite visualization (Figure~\ref{fig:kmeans_composite}), we hypothesize that this divergence occurs because the zebra images frequently feature a herd or multiple intersecting animals, creating a complex, high-frequency textural pattern that the model maps differently compared to the single-subject compositions of other mammals.
+An interesting anomaly was observed in images containing zebras, which predominantly formed an isolated cluster. As highlighted in the composite visualization (Figure~\ref{fig:kmeans_composite}), we hypothesize that this divergence occurs because the zebra images frequently feature a herd or multiple intersecting animals, creating a pattern that the model maps differently compared to the single-subject compositions of other mammals.
 
 Additionally, the representations demonstrate a strong dependency on the underlying terrain upon which the subjects are standing. The clustering algorithm successfully decoupled different floor textures, consistently assigning grassy terrains to a specific cluster, denoted by a pink hue in the visualization, while non-grassy or barren surfaces were segregated into a separate cluster, represented in dark blue. This distinction is visually evident in the overall mappings (Figure~\ref{fig:kmeans_composite}), highlighting the capacity of DINOv3 to simultaneously encode intricate local textures, broad environmental contexts, and spatial priors within its patch-level representations.
 
@@ -829,7 +829,7 @@ An analysis of the resulting cluster-coloured patch maps reveals a highly consis
     \item \textbf{Cluster 1 (Green):} Isolates the lower extremities and legs.
     \item \textbf{Cluster 2 (Purple):} Maps to the central torso or main body mass.
     \item \textbf{Cluster 5 (Azure):} Outlines the general silhouette or structural shape boundaries of the subject.
-    \item \textbf{Cluster 0 \& Cluster 3 (Pink):} Despite the tight foreground cropping, residual spatial awareness dictates the background representation, with Cluster 0 consistently mapping to the left side of the background and Cluster 3 (pink) mapping to the right side.
+    \item \textbf{Cluster 0 (Blue) \& Cluster 3 (Pink):} Despite the tight foreground cropping, residual spatial awareness dictates the background representation, with Cluster 0 consistently mapping to the left side of the background and Cluster 3 mapping to the right side.
 \end{itemize}
 
 These mappings, illustrated in Figure~\ref{fig:kmeans_composite_cropped}, demonstrate the algorithm's capacity to perform zero-shot anatomical segmentation by grouping features such as fur textures, facial structures, and extremities into distinct semantic clusters.
@@ -865,13 +865,97 @@ To mathematically assess the similarity between these diverse feature distributi
     \chi^2(x, y) = \frac{1}{2} \sum_{i} \frac{(x_i - y_i)^2}{x_i + y_i}
 \end{equation}
 
-The pairwise distances between all subjects were computed and are visualized in Figure~\ref{fig:chi_square_comparison}. A notable, albeit counterintuitive, observation derived from this matrix is the relative proximity of the car's feature distribution to those of the biological animals. While a car inherently lacks biological anatomy, its fundamental compositional structure—possessing a defined "head" (front fascia/hood), a "body" (cabin), and "legs" (wheels)—is mapped into the DINOv3 latent space in a manner that yields a remarkably similar normalized cluster distribution. This suggests that the model's deeper representations capture broad topological and structural hierarchies that transcend strict biological boundaries.
+The pairwise distances between all subjects were computed and are visualized in Figure~\ref{fig:chi_square_comparison}. A notable, albeit counterintuitive, observation derived from this matrix is the relative proximity of the car's feature distribution to those of the biological animals. While a car inherently lacks biological anatomy, its fundamental compositional structure—possessing a defined "head" (front fascia/hood), a "body" (cabin), and "legs" (wheels)—is mapped into the DINOv3 latent space in a manner that yields a remarkably similar normalized cluster distribution. 
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=1.0\textwidth]{figures/clustering/chi_square_animals_cropped.png}
-    \caption[Chi-Square distance matrix for cluster distributions]{Pairwise Chi-Square ($\chi^2$) distance matrix comparing the $L_1$-normalized cluster histograms of different subjects. Lower values indicate higher distributional similarity. Notably, the metric demonstrates a structural affinity between the car and several animal subjects.}
+    \includegraphics[width=0.75\textwidth]{figures/clustering/chi_square_animals_cropped.png}
+    \caption[Chi-Square distance matrix for cluster distributions]{Pairwise Chi-Square ($\chi^2$) distance matrix comparing the $L_1$-normalized cluster histograms of different subjects.}
     \label{fig:chi_square_comparison}
+\end{figure}
+
+\vfill
+\newpage
+
+\section{K-NN Classification}
+\label{sec:knn_classification}
+
+Building upon the previous stage of our methodology, where we computed frequency histograms to represent the distinct semantic fingerprint of each image based on their patch distributions, we now formalize our classification pipeline. In this section, we present an extensive experiment evaluating the discriminative power of these histograms using a K-Nearest Neighbors (K-NN) classifier.
+
+To systematically analyze the impact of the vocabulary size (i.e., the number of visual words or clusters) on the classification performance, we parameterized our K-Means clustering algorithm to generate codebooks of varying dimensionalities, specifically $K \in \{16, 64, 256, 1024\}$. Given the high dimensionality of the DINOv3 feature vectors, the clustering process was accelerated using the Facebook AI Similarity Search (FAISS) library \cite{johnson2017billionscalesimilaritysearchgpus}, which provides highly efficient GPU-enabled implementations for similarity search and clustering of dense vectors. 
+
+To provide a concrete intuition of these semantic representations, Figure \ref{fig:histogram_examples_k64} visualizes the computed frequency histograms for eight randomly selected Caltech-101 classes, utilizing a generated vocabulary size of $K=64$.
+
+\begin{figure}[htbp]
+    \centering
+    % Replace 'figures/histogram_example.png' with your actual file path
+    \includegraphics[width=0.95\textwidth]{figures/knn_no_ood_benchmarks/average_random_class_benchmark.png} 
+    \caption{Example frequency histograms BoVW for eight randomly selected classes from the Caltech-101 dataset, generated using a K-Means vocabulary size of $K=64$.}
+    \label{fig:histogram_examples_k64}
+\end{figure}
+
+\subsection{Distance Functions}
+\label{sec:knn_classification_distance_functions}
+For the K-NN classification itself, we evaluated the model across a diverse set of neighborhood sizes, testing $k \in \{1, 3, 7, 9, 11, 25\}$. To determine the most effective method for comparing our histogram representations, we assessed three distinct distance and similarity metrics:
+\begin{enumerate}
+    \item \textbf{Chi-Square Distance:} A standard and highly effective metric for comparing empirical probability distributions, which aligns with the histogram format of our Bag of Visual Words (BoVW) approach.
+    \item \textbf{TF-IDF with Cosine Similarity:} Term Frequency-Inverse Document Frequency weighting applied to the raw histograms, followed by cosine similarity. This adapts a proven technique from information retrieval to down-weight ubiquitous visual features and emphasize discriminative ones.
+    \item \textbf{Hellinger Distance (via FAISS L2):} A robust measure for quantifying the similarity between two probability distributions, computed efficiently by applying L2 distance on square-root normalized histograms within the FAISS framework.
+\end{enumerate}
+
+\subsection{Dataset}
+\label{sec:knn_classification_dataset}
+Our evaluation was conducted using the Caltech-101 dataset. To rigorously assess the robustness of the learned representations and the influence of background noise on the clustering space, we performed the feature extraction process under three distinct data conditions:
+
+\begin{enumerate}
+    \item \textbf{Original Images:} The standard Caltech-101 images without any spatial modification.
+    \item \textbf{Cropped Foreground Segmentation:} Images segmented to isolate the foreground object, with the background replaced by zero-value (black) pixels and zoomed in. This serves as a baseline to evaluate the impact of masking out background context.
+    \item \textbf{Foreground-Only Patches:} A refined approach where only the specific patches containing the foreground object are extracted and passed to the clustering pipeline. Unlike the benchmark segmentation, this method completely omits any patches consisting solely of blank black regions.
+\end{enumerate}
+
+\subsection{Results on Original Images}
+\label{sec:knn_classification_results_original}
+
+In this subsection, we present the classification results obtained using the unaltered, original Caltech-101 images. This acts as our primary baseline to which future modifications will be compared. We provide a comprehensive performance overview through a series of matrices and qualitative visualizations.
+
+An important observation universal to all tested metrics on this dataset variation is the convergence of model performance. The highest accuracies were consistently achieved with a vocabulary size of $K=1024$ and using $k=9$ nearest neighbors. Increasing parameters beyond these points did not yield significant gains in classification accuracy. Conversely, utilizing larger vocabularies or neighborhood counts resulted solely in increased model complexity and substantially longer evaluation times, as the dimensionalities of both the histogram vectors and the search space grew without commensurate improvements in discriminative power.
+
+Figure \ref{fig:results_matrix_orig_chisq} presents the complete accuracy matrix for the K-NN classifier utilizing the Chi-Square distance metric, covering every combination of vocabulary size ($K$) and neighborhood count ($k$). As mentioned in Section \ref{sec:knn_classification}, this metric generally provided the strongest results for our visual word distributions.
+
+\begin{figure}[htbp]
+    \centering
+    % Update with your actual figure path
+    \includegraphics[width=0.8\textwidth]{figures/knn_no_ood_benchmarks/chi_full_matrix.png}
+    \caption{Classification accuracy matrix for Original images using Chi-Square distance across varying vocabulary sizes ($K$) and neighborhood counts ($k$).}
+    \label{fig:results_matrix_orig_chisq}
+\end{figure}
+
+Similarly, Figure \ref{fig:results_matrix_orig_tfidf} visualizes the performance matrix when using TF-IDF weighting and Cosine similarity. In line with conventional information retrieval wisdom, where TF-IDF requires a sufficiently descriptive feature space to derive meaningful term weights, preliminary testing indicated that a vocabulary of $K=16$ did not provide enough visual word granularity to benefit from this weighting scheme. Therefore, this exceptionally low dimensionality was excluded from the TF-IDF comparison to focus on more robust configurations.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/knn_no_ood_benchmarks/tdidf_full_matrix.png}
+    \caption{Classification accuracy matrix for Original images using TF-IDF with Cosine Similarity. Note that $K=16$ was omitted as the low vocabulary size lacked sufficient granularity for meaningful TF-IDF weighting.}
+    \label{fig:results_matrix_orig_tfidf}
+\end{figure}
+
+Experiments were also conducted on the original images using the Hellinger distance via the efficient FAISS L2 implementation. While these results demonstrated robust behavior comparable to the methodologies discussed above, they did not offer distinct mathematical insights or significantly improved trends over the primary comparisons shown in Figures \ref{fig:results_matrix_orig_chisq} and \ref{fig:results_matrix_orig_tfidf}. Therefore, to maintain concise reporting of results, the detailed plotting matrix for this configuration is omitted, as it offers limited marginal information.
+
+Finally, to gain qualitative insight into the failure modes of our baseline models, Figures \ref{fig:failures_original_k256_chisq} and \ref{fig:failures_original_k256_tfidf} present a selection of misclassified test images using a vocabulary size of $K=256$ for the Chi-Square and TF-IDF metrics, respectively. Both figures are organized into four columns displaying, from left to right: the original query image, the clustering visualization of the query image, the erroneously retrieved closest training neighbor, and the clustering visualization of that neighbor. These visual examples highlight instances where structural similarities or shared background contexts in the DINOv3 feature space overpowered the true categorical labels. Notably, during the TF-IDF evaluation (Figure \ref{fig:failures_original_k256_tfidf}), the model misclassified an image belonging to the \textit{Faces} category as \textit{Faces\_easy}. Given the obvious semantic overlap between these two categories, we will merge them into a single class in our subsequent experiments to prevent artificial penalization of the model's accuracy.
+
+\begin{figure}[htbp]
+    \centering
+    % Update with your actual figure path for Chi-Square failures
+    \includegraphics[width=0.95\textwidth]{figures/knn_no_ood_benchmarks/chi_square_fail.png}
+    \caption{Qualitative analysis of K-NN failure cases on Original images using the Chi-Square distance ($K=256$). The columns show, from left to right: (1) the original query image, (2) the query image colored by cluster ID assignment, (3) the retrieved closest training neighbor, and (4) the training neighbor colored by cluster ID.}
+    \label{fig:failures_original_k256_chisq}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/knn_no_ood_benchmarks/tdidf_fail.png}
+    \caption{Qualitative analysis of K-NN failure cases on Original images using TF-IDF with Cosine Similarity ($K=256$). The columns show, from left to right: (1) the original query image, (2) the query image colored by cluster ID assignment, (3) the retrieved closest training neighbor, and (4) the training neighbor colored by cluster ID. Note the semantic misclassification of a \textit{Faces} sample as \textit{Faces\_easy}.}
+    \label{fig:failures_original_k256_tfidf}
 \end{figure}
 
 \chapter{Conclusion}
