@@ -15,6 +15,7 @@
 \usepackage{longtable}
 \usepackage{csquotes}
 \usepackage{subcaption}
+\usepackage{pdfpages}
 
 \addbibresource{bibliography/bib_ctu.bib}
 \addbibresource{bibliography/bib_research.bib}
@@ -46,7 +47,7 @@
     titlelanguage = {english},
     otherlanguages = {czech},
     xfaculty = {F3},
-    front-specification = {false},
+    front-specification = {true},
     pkg-hyperref = false,
     pkg-listings = true,
 }
@@ -61,30 +62,20 @@
 
 \setlength{\parskip}{0em}
 
+\ctutemplateset{include.specification}{
+    \includepdf[pages=-]{files/prohlaseni.pdf}
+    \includepdf[pages=1]{files/zadani.pdf}
+}
+
 \begin{comment}
 \begin{abstract-czech}
 \\
-Tato práce se zabývá klíčovou výzvou detekce vstupů mimo distribuci (OOD) v systémech pro rozpoznávání vizuálních objektů. Ačkoliv výkonné modely, jako jsou konvoluční neuronové sítě (CNN) nebo vizuální transformátory (ViT), dosahují vynikajících výsledků na známých datech, jejich spolehlivost v reálných aplikacích klesá, když se setkají s novými nebo neznámými vstupy.
-
-Tata práce zkoumá různé techniky detekce OOD s využitím bohatých reprezentací příznaků extrahovaných z modelu ViT založeného na DINO.
-
-Náš výzkum má dva hlavní cíle. Prvním je umožnit robustní detekci anomálních vstupů, které leží mimo trénovací data modelu. Druhým je prozkoumat hierarchickou detekci: pokročilejší schopnost, kdy model identifikuje související, avšak nové vstupy tím, že jim přiřadí správnou, širší nadkategorii.
-
-Tato práce hodnotí praktické, post-hoc strategie aplikované na příznaky modelu DINO k dosažení těchto cílů bez náročného přetrénování. Naším cílem je identifikovat efektivní metody, které zlepšují jak odmítání OOD, tak hierarchické chápání, čímž činí tyto vizuální nástroje bezpečnějšími, inteligentnějšími a důvěryhodnějšími pro nasazení v reálném světě.
-
 \end{abstract-czech}
 \end{comment}
 
 \begin{comment}
 \begin{abstract-english}
 \\
-This thesis addresses the critical challenge of out-of-distribution (OOD) detection in visual object recognition systems. While powerful models like Convolutional Neural Networks (CNNs) or Vision Transformers (ViTs) perform remarkably well on known data, their reliability in real-world applications diminishes when encountering novel or unknown inputs.
-
-This work explores various OOD detection techniques with rich feature representations extracted from a DINO-based ViT model.
-
-Our research has two primary objectives. First, to enable the robust detection of anomalous inputs that fall outside the model's training data. Second, to explore  hierarchical detection: a more advanced capability where the model identifies related but novel inputs by assigning them to a correct, broader super-category.
-
-This work evaluates practical, post-hoc strategies applied to the DINO model's features to achieve these goals without costly retraining. We aim to identify effective methods that enhance both OOD rejection and hierarchical understanding, thereby making these visual tools safer, more intelligent, and more trustworthy for real-world deployment.
 \end{abstract-english}
 \end{comment}
 
@@ -92,7 +83,6 @@ This work evaluates practical, post-hoc strategies applied to the DINO model's f
 \begin{document}
 
 \maketitle
-
 
 \chapter{Introduction}
 \label{intro}
@@ -134,7 +124,7 @@ Finally, it explores the emerging concept of hierarchical OOD detection, highlig
 \label{sec:rel_representation}
 State-of-the-art computer vision architectures have evolved significantly from traditional CNNs to more sophisticated models like ViTs.
 
-\subsection{Vision Transformers (ViT)}
+\subsection{Vision Transformers}
 \label{sec:rel_vit}
 Vision Transformers (ViTs)\cite{dosovitskiy2021imageworth16x16words} have revolutionized and dethroned CNNs as the progressively increasing architecture in computer vision. 
 Unlike CNNs, which process images via local receptive fields and convolutional layers, ViTs leverage the self-attention mechanism from the Transformer architecture\cite{vaswani2023attentionneed} to capture global dependencies in images.
@@ -204,7 +194,7 @@ Hierarchical models utilize structured label spaces, often derived from ontologi
 \end{figure}
 In the context of OOD detection, this structure provides a robust fallback mechanism. If the model encounters a novel input that implies high uncertainty at the leaf level, it can back-off to a parent node (e.g., classifying an unknown animal simply as \textit{Animal}), thereby preserving system reliability and safety.
 
-\chapter{Methodology and Analysis}
+\chapter{Feature Representation and Analysis}
 \label{our_research}
 The initial phase of this research consisted of assessing the efficacy of DINOv3 feature representations for our OOD problem. A critical requirement for our task is the model's ability to enforce tight grouping of semantically similar classes in the feature space while maintaining separability from distinct concepts.
 
@@ -227,7 +217,7 @@ To evaluate the robustness and generalizability of the features learned by the D
 Prior to investigating the layer-wise evolution of features within the DINOv3 architecture, we conducted an initial assessment of the overall quality of the learned representations. This involved extracting feature embeddings from the final layer of the model for images across the selected datasets. 
 
 \subsection{Dimensionality Reduction and Visualization}
-To visuallize the high-dimensional feature space of the data and demonstrate class separability, we employed \textbf{Principal Component Analysis (PCA)} to reduce the dimensionality of the embeddings from $\mathbb{R}^{1024}$ to $\mathbb{R}^2$ and $\mathbb{R}^3$.
+To visuallize the high-dimensional feature space of the data and demonstrate class separability, we employed \textbf{PCA} to reduce the dimensionality of the embeddings from $\mathbb{R}^{1024}$ to $\mathbb{R}^2$ and $\mathbb{R}^3$.
 
 The goal was to project the \textit{final} representations of either the entire dataset or a subset onto a common manifold. This visualization helped us to confirm the following properties:
 \begin{itemize}
@@ -411,7 +401,7 @@ The extraction mechanism relies on registering \textit{forward hooks} within the
 For a given input image, the output at layer $l$ is a tensor of shape $(1, N_{seq}, D)$, where $N_{seq}$ represents the sequence length and $D$ is the embedding dimension. To visualize the spatial layout of features, we discard the special tokens—specifically the \texttt{[CLS]} token and the register tokens retaining only the patch tokens. These patch tokens are then reshaped back into a 2D grid corresponding to the original image topology ($H \times W$).
 
 \subsection{Dimensionality Reduction Strategies}
-Visualizing $D=1024$ dimensions requires projecting the data onto a lower-dimensional manifold. We implemented and compared two distinct strategies for this projection using Principal Component Analysis (PCA): \textit{Global PCA} and \textit{Local PCA}.
+Visualizing $D=1024$ dimensions requires projecting the data onto a lower-dimensional manifold. We implemented and compared two distinct strategies for this projection using PCA: \textit{Global PCA} and \textit{Local PCA}.
 
 \subsubsection{Method A: Global PCA (Trajectory Preservation)}
 In the Global approach, we prioritize the temporal and geometric consistency of the features across the network depth. We aggregate the feature vectors from all layers $l$ and all spatial positions into a single global dataset $\mathbf{X}_{global}$:
@@ -462,7 +452,7 @@ Mathematically, this identifies the three principal components that explain the 
 
 \subsubsection{Method A.1: Global PCA with Mean Subtraction (Centered PCA)}
 
-In standard Principal Component Analysis, it is customary to center the data by subtracting the empirical mean before calculating the covariance matrix. To investigate the effect of this centering on our feature trajectory visualization, we conducted an auxiliary experiment where the global dataset $\mathbf{X}_{global}$ was mean-centered prior to projection:
+In standard PCA, it is customary to center the data by subtracting the empirical mean before calculating the covariance matrix. To investigate the effect of this centering on our feature trajectory visualization, we conducted an auxiliary experiment where the global dataset $\mathbf{X}_{global}$ was mean-centered prior to projection:
 
 \begin{equation}
     \bar{\mathbf{x}} = \frac{1}{N} \sum_{i=1}^{N} \mathbf{x}_{i}, \quad \hat{\mathbf{X}}_{global} = \mathbf{X}_{global} - \bar{\mathbf{x}}
@@ -677,10 +667,13 @@ This behavior extends to complex scenes. In the cityscape example (Figure~\ref{f
     \label{fig:city_attention}
 \end{figure}
 
+\chapter{Downstream Applications and Benchmarking}
+\label{application_and_benchmarking}
+
 \section{Out-of-Distribution Detection Methods}
 \label{sec:ood_methods}
 
-To evaluate the robustness and generalizability of the learned representations, we conducted a series of OOD detection experiments. In this setup, the Food-101 dataset was designated as the In-Distribution (ID) baseline. We then evaluated the model's ability to distinguish these ID samples from three distinct OOD datasets: Oxford-IIIT Pet, FGVC Aircraft, and the Describable Textures Dataset (DTD). To preserve high-frequency visual details crucial for both fine-grained classification and texture recognition, all images were uniformly processed through a $512 \times 512$ resolution pipeline.
+To evaluate the robustness and generalizability of the learned representations, we conducted a series of OOD detection experiments. In this setup, the Food-101 dataset was designated as the ID baseline. We then evaluated the model's ability to distinguish these ID samples from three distinct OOD datasets: Oxford-IIIT Pet, FGVC Aircraft, and the Describable Textures Dataset (DTD). To preserve high-frequency visual details crucial for both fine-grained classification and texture recognition, all images were uniformly processed through a $512 \times 512$ resolution pipeline.
 
 \subsection{Linear Probe and Scoring Functions}
 Foundation models such as DINOv3 inherently output high-dimensional feature embeddings rather than class-specific logits. However, several prominent post-hoc OOD detection algorithms operate directly on the logit space of a classifier. To bridge this gap without distorting the pre-trained manifold via full fine-tuning, we trained a simple Linear Probe on top of the frozen DINOv3 embeddings. This yielded the necessary pre-softmax logits for our target ID classes (Food-101).
@@ -689,7 +682,7 @@ Using these projections, we evaluated three state-of-the-art OOD scoring mechani
 \begin{itemize}
     \item \textbf{Energy Score \cite{liu2021energybasedoutofdistributiondetection}:} Computes the Helmholtz free energy over the logit vector, functioning as a theoretically grounded alternative to the standard softmax confidence.
     \item \textbf{Mahalanobis Distance \cite{lee2018simpleunifiedframeworkdetecting}:} A generative, distance-based metric that measures the distance of a test sample's feature representation to the closest class-conditional Gaussian distribution fitted on the ID training features.
-    \item \textbf{ODIN (Out-of-DIstribution detector for Neural networks) \cite{liang2020enhancingreliabilityoutofdistributionimage}:} Utilizes temperature scaling and input preprocessing (small adversarial perturbations) to separate the softmax distributions of ID and OOD samples.
+    \item \textbf{ODIN (Out-of-Distribution detector for Neural networks) \cite{liang2020enhancingreliabilityoutofdistributionimage}:} Utilizes temperature scaling and input preprocessing (small adversarial perturbations) to separate the softmax distributions of ID and OOD samples.
 \end{itemize}
 
 The primary evaluation metric used was the Area Under the Receiver Operating Characteristic curve (AUROC). Additionally, for qualitative analysis, we set the operating acceptance threshold to maintain a 95\% True Positive Rate (TPR) for ID data.
@@ -697,7 +690,7 @@ The primary evaluation metric used was the Area Under the Receiver Operating Cha
 \subsection{Results and the Semantic Overlap Anomaly}
 The quantitative results, visualized in the Receiver Operating Characteristic (ROC) curves in Figure~\ref{fig:roc_curves}, demonstrated near-flawless OOD detection performance (AUROC $\approx 1.0$) when comparing Food-101 against the Oxford-IIIT Pet and FGVC Aircraft datasets across all three methods. The steep, right-angled trajectories for these datasets confirm that the representations learned by the network cleanly separated these distinct semantic domains.
 
-However, as evident from the visibly sagging curves in Figure~\ref{fig:roc_curves}, performance on the Textures dataset (DTD) presented a notable exception, yielding lower AUROC scores and higher False Positive Rates. Upon qualitative investigation, we discovered that this drop in statistical performance does not indicate a failure of the feature representation. Rather, it highlights a semantic overlap between the datasets: the Textures dataset inherently contains images of distinct food patterns (e.g., clustered berries, cross-sections of vegetables, woven pasta). 
+However, as evident from the visibly sagging curves in Figure~\ref{fig:roc_curves}, performance on the Textures dataset presented a notable exception, yielding lower AUROC scores and higher False Positive Rates. Upon qualitative investigation, we discovered that this drop in statistical performance does not indicate a failure of the feature representation. Rather, it highlights a semantic overlap between the datasets: the Textures dataset inherently contains images of distinct food patterns (e.g., clustered berries, cross-sections of vegetables, woven pasta). 
 
 Consequently, the models confidently---and correctly, from a semantic standpoint---classified these specific OOD samples as ID (Food). To investigate this behavior, we extracted the highest-confidence false positive samples for both the Energy Score and Mahalanobis Distance at the 95\% TPR threshold, presented in Figure~\ref{fig:ood_false_positives}. It is visually evident from these visual samples that the ``misclassified'' texture images are, in fact, food items. 
 
@@ -722,7 +715,7 @@ Consequently, the models confidently---and correctly, from a semantic standpoint
         \includegraphics[width=\textwidth]{figures/ood_methods/roc_odin.png}
         \caption{ODIN (Subset)}
     \end{subfigure}
-    \caption[OOD Detection ROC Curves]{Receiver Operating Characteristic (ROC) curves for OOD detection using Food-101 as the ID dataset. The algorithms achieve flawless separation on Pets and Aircraft (steep curves), while the variance in the Textures curve is driven by semantic dataset overlap.}
+    \caption[OOD Detection ROC Curves]{ROC curves for OOD detection using Food-101 as the ID dataset. The algorithms achieve flawless separation on Pets and Aircraft (steep curves), while the variance in the Textures curve is driven by semantic dataset overlap.}
     \label{fig:roc_curves}
 \end{figure}
 
@@ -910,7 +903,7 @@ Our evaluation was conducted using the Caltech-101 dataset. To rigorously assess
 \begin{enumerate}
     \item \textbf{Original Images:} The standard Caltech-101 images without any spatial modification.
     \item \textbf{Cropped Foreground Segmentation:} Images segmented to isolate the foreground object, with the background replaced by zero-value (black) pixels and zoomed in. This serves as a baseline to evaluate the impact of masking out background context.
-    \item \textbf{Filtered Object Patches:} A sparse extraction approach where only the specific visual patches overlapping with the foreground object mask are retained and passed to the clustering pipeline. Unlike the cropped segmentation approach—which processes the entire rectangular bounding box and inherently includes blank background patches—this method strictly filters out non-object patches. This ensures the resulting histograms are constructed exclusively from the semantic features of the object itself, without being skewed by uniform background regions.
+    \item \textbf{Filtered Object Patches:} A sparse extraction approach where only the specific visual patches overlapping with the foreground object mask are retained and passed to the clustering pipeline.
 \end{enumerate}
 
 \subsection{Results on Original Images}
@@ -1004,6 +997,38 @@ Despite the slight drop in peak accuracy, the general convergence trends remaine
     \label{fig:matrix_cropped_tfidf}
 \end{figure}
 
+\vfill
+\newpage
+
+\subsection{Results on Filtered Images}
+\label{sec:knn_classification_results_filtered}
+
+In this final experimental configuration, we evaluated the classification performance using the filtered object patches. Under this approach, only the patches overlapping with the foreground object were processed, but unlike the previous method, the original pixel values were retained without explicitly blacking out the surrounding areas. 
+
+This filtering approach achieved comparable performance to the cropped and masked images discussed in Section \ref{sec:knn_classification_results_cropped}. Because the surrounding pixels were not artificially set to zero. However, the inclusion of this minor environmental data did not significantly influence the overall classification accuracy.
+
+Furthermore, a review of the misclassifications revealed a highly correlated error profile between this filtered approach and the fully masked cropped approach. The model struggled with the exact same ambiguous test cases. This observation leads us to a conclusion regarding the backbone model: DINOv3's feature representations are inherently highly object-centric. When the spatial processing is explicitly localized and the subject is centered, the model naturally focuses its attention on the semantic features of the object itself. 
+
+Consequently, explicitly destroying the background through zero-value masking provides a negligible discriminative advantage and does not fundamentally alter the classifier's behavior.
+
+The complete performance metrics for this dataset modification are visualized below in Figures~\ref{fig:matrix_filtered_chisq_l2} and \ref{fig:matrix_filtered_tfidf}. 
+
+\begin{figure}[htbp]
+    \centering
+    % The width is set wider since this image contains TWO matrices
+    \includegraphics[width=0.9\textwidth]{figures/knn_no_ood_benchmarks/vectors_cropped_matrix_chi_faiss.png}
+    \caption[Filtered Images: Chi-Square and L2 Accuracy]{Classification accuracy matrices for Filtered images. (Left) Chi-Square distance. (Right) FAISS L2 Hellinger distance. Both are evaluated across varying vocabulary sizes ($K$) and neighborhood counts ($k$).}
+    \label{fig:matrix_filtered_chisq_l2}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    % The width is set to half of the figure above so the matrix matches in size
+    \includegraphics[width=0.45\textwidth]{figures/knn_no_ood_benchmarks/vectors_cropped_matrix_tfidf.png}
+    \caption[Filtered Images: TF-IDF Accuracy]{Classification accuracy matrix for Filtered images using TF-IDF with Cosine Similarity.}
+    \label{fig:matrix_filtered_tfidf}
+\end{figure}
+
 \chapter{Conclusion}
 \label{conclusion}
 
@@ -1025,17 +1050,34 @@ In conclusion, the frozen DINOv3 model provides rich and useful features. Future
 
 \begin{center}
     \begin{tabular}{r p{25em}}
-        \textbf{ViT}             &  Vision Transformer \\
-        \textbf{CNN}             &   Convolutional Neural Network \\
-        \textbf{OOD}             &   Out-of-Distribution \\
-        \textbf{DINO}            &   Self-Distillation with No Labels \\
-        \textbf{ID}             &   In-Distribution \\
-        \textbf{SSL}            &   Self-Supervised Learning \\
-        \textbf{MSP}            &   Maximum Softmax Probability \\
-        \textbf{OE}             &   Outlier Exposure \\
-        \textbf{OSR}            &   Open-Set Recognition \\
-        \textbf{OWR}            &   Open-World Recognition \\
-        \textbf{ARPL}           &   Adversarial Reciprocal Points Learning \\
+        \textbf{AI}     & Artificial Intelligence \\
+        \textbf{ARPL}   & Adversarial Reciprocal Points Learning \\
+        \textbf{AUROC}  & Area Under the Receiver Operating Characteristic curve \\
+        \textbf{BoVW}   & Bag of Visual Words \\
+        \textbf{Caltech} & California Institute of Technology \\
+        \textbf{CNN}    & Convolutional Neural Network \\
+        \textbf{CLIP}   & Contrastive Language-Image Pretraining \\
+        \textbf{CLS} & Classification Token \\
+        \textbf{DINO}   & Self-Distillation with No Labels \\
+        \textbf{DTD}    & Textures Dataset \\
+        \textbf{FAISS}  & Facebook AI Similarity Search \\
+        \textbf{ID}     & In-Distribution \\
+        \textbf{K-NN}   & K-Nearest Neighbors \\
+        \textbf{MSP}    & Maximum Softmax Probability \\
+        \textbf{OE}     & Outlier Exposure \\
+        \textbf{OOD}    & Out-of-Distribution \\
+        \textbf{OSR}    & Open-Set Recognition \\
+        \textbf{OWR}    & Open-World Recognition \\
+        \textbf{PCA}    & Principal Component Analysis \\
+        \textbf{RGB}    & Red Green Blue \\
+        \textbf{ROC}    & Receiver Operating Characteristic \\
+        \textbf{SSL}    & Self-Supervised Learning \\
+        \textbf{SVHN}   & Street View House Numbers \\
+        \textbf{TF-IDF} & Term Frequency-Inverse Document Frequency \\
+        \textbf{t-SNE}  & t-Distributed Stochastic Neighbor Embedding \\
+        \textbf{ViT}    & Vision Transformer \\
+        \textbf{YOLO}   & You Only Look Once \\
+        \textbf{WCSS}   & Within-cluster sum of squares \\
     \end{tabular}
 \end{center}
 
