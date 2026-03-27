@@ -41,8 +41,8 @@
     fieldofstudy-english = {Open Informatics},
     subfieldofstudy-czech = {Základy umělé inteligence a počítačových věd},
     subfieldofstudy-english = {Artificial Intelligence and Computer Science},
-    keywords-czech = {Detekci mimo distribuci (OOD), Rozpoznávání vizuálních objektů, Vizuální transformátory (ViTs), DINO, Post-hoc metody, Hierarchická detekce, Reprezentace příznaků, Detekce neznámých vstupů},
-    keywords-english = {Out-of-Distribution Detection (OOD), Visual Object Recognition, Vision Transformers (ViTs), DINO, Post-Hoc Methods, Hierarchical Detection, Feature Representation, Unknown Input Detection},
+    keywords-czech = {Detekce mimo distribuci (OOD), Rozpoznávání vizuálních objektů, Vizuální transformátory (ViTs), DINOv3, Post-hoc metody, Hierarchická detekce, Reprezentace příznaků, Bag of Visual Words},
+    keywords-english = {Out-of-Distribution Detection (OOD), Visual Object Recognition, Vision Transformers (ViTs), DINOv3, Post-Hoc Methods, Hierarchical Detection, Feature Representation, Bag of Visual Words},
     mainlanguage = {english},
     titlelanguage = {english},
     otherlanguages = {czech},
@@ -64,20 +64,27 @@
 
 \ctutemplateset{include.specification}{
     \includepdf[pages=-]{files/prohlaseni.pdf}
-    \includepdf[pages=1]{files/zadani.pdf}
+    \includepdf[pages=-]{files/zadani.pdf}
+    
+    \cleardoublepage
+    \chapter{\thanksname}
+    \noindent
+    I would like to express my gratitude to my supervisor, Mgr. Ondřej Drbohlav, Ph.D., for his expert guidance and time. His practical advice and constructive feedback significantly helped in shaping the quality of this work.
+
+    I am profoundly thankful to my girlfriend for her boundless patience,   understanding, and emotional support. 
+
+    I also wish to thank my family for their lifelong presence, and     particularly for granting me an unprecedented, continuous week of   absolute solitude during the most critical phase of my writing.   Additionally, I must acknowledge my long-time strategic collaborator on the Summoner's Rift, whose relentless pursuit of the Challenger tier  provided a recurring and highly effective test of my focus and time-management skills throughout the drafting process.
+
+    Finally, I extend my appreciation to the \textit{Centrum Znalostního Managementu}. My experience there offered profound clarity regarding my professional trajectory, definitively confirming my strong preference for academic research over conventional corporate environments.
 }
 
-\begin{comment}
-\begin{abstract-czech}
-\\
-\end{abstract-czech}
-\end{comment}
-
-\begin{comment}
 \begin{abstract-english}
-\\
+This thesis investigates hierarchical Out-of-Distribution detection using the self-supervised representations of the DINOv3 Vision Transformer. Unlike traditional global classification, our approach leverages localized semantic features by clustering image patches into a Bag of Visual Words representation. We evaluate post-hoc scoring methods, including ODIN, Energy-based scores, and K-Nearest Neighbors  with Chi-Square metrics, to distinguish known categories from unknown inputs. Benchmarking on datasets such as Food-101, Oxford Pets, and MNIST demonstrates that DINOv3’s high-dimensional latent space significantly enhances feature separation. The results show that localized hierarchical analysis improves the robustness of OOD detection, particularly for semantically ambiguous inputs.
 \end{abstract-english}
-\end{comment}
+
+\begin{abstract-czech}
+Tato bakalářská práce se zabývá hierarchickou detekcí dat mimo distribuci s využitím samo-učících se reprezentací vizuálního transformátoru DINOv3. Na rozdíl od tradiční globální klasifikace náš přístup využívá lokalizované sémantické příznaky shlukováním obrazových patchů do reprezentace typu „Bag of Visual Words“. K odlišení známých kategorií od neznámých vstupů vyhodnocujeme post-hoc metody skórování, včetně ODIN, energetického skórování a algoritmu K-nejbližších sousedů  s Chi-kvadrát metrikou. Benchmarking na datasetech Food-101, Oxford Pets a MNIST potvrzuje, že vysokodimenzionální latentní prostor modelu DINOv3 výrazně zlepšuje separaci příznaků. Výsledky ukazují, že lokalizovaná hierarchická analýza zvyšuje robustnost detekce OOD, zejména u sémanticky nejednoznačných vstupů.
+\end{abstract-czech}
 
 
 \begin{document}
@@ -951,6 +958,46 @@ Finally, to gain qualitative insight into the failure modes of our baseline mode
     \label{fig:failures_original_k256_tfidf}
 \end{figure}
 
+To further characterize the overall distribution of these metrics and summarize the most frequent classification errors globally, Figures \ref{fig:dist_chi} and \ref{fig:dist_tfidf} present the distance distributions paired with the top misclassified class mappings for selected configurations of the Chi-Square ($k=1, 7$) and TF-IDF ($k=3, 7$) approaches.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/odd_distances/1NN_graph.png}
+        \caption{Chi-Square ($k=1$)}
+        \label{fig:dist_chi_1nn}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/odd_distances/7NN_graph.png}
+        \caption{Chi-Square ($k=7$)}
+        \label{fig:dist_chi_7nn}
+    \end{subfigure}
+    \caption[Chi-Square distributions and misclassifications]{Global Chi-Square distance distributions and the most frequent class misclassifications for $1$-NN and $7$-NN evaluations.}
+    \label{fig:dist_chi}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/odd_distances/3NN_tdidf_graph.png}
+        \caption{TF-IDF Cosine Similarity ($k=3$)}
+        \label{fig:dist_tfidf_3nn}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/odd_distances/7NN_tdidf_graph.png}
+        \caption{TF-IDF Cosine Similarity ($k=7$)}
+        \label{fig:dist_tfidf_7nn}
+    \end{subfigure}
+    \caption[TF-IDF distributions and misclassifications]{Global TF-IDF Cosine similarity distributions and the most frequent class misclassifications for $3$-NN and $7$-NN evaluations.}
+    \label{fig:dist_tfidf}
+\end{figure}
+
 \vfill
 \newpage
 
@@ -1029,18 +1076,319 @@ The complete performance metrics for this dataset modification are visualized be
     \label{fig:matrix_filtered_tfidf}
 \end{figure}
 
+\chapter{Proposed Dual-Condition Out-of-Distribution Detection}
+\label{chap:proposed_ood_detection}
+Building upon the feature representations and clustering mechanisms explored in the previous chapters, this final analytical chapter introduces an OOD detection heuristic. We extend the K-Nearest Neighbors classification pipeline established in Section \ref{sec:knn_classification_results_original}, leveraging the semantic histograms of image patches to separate ID samples from unseen anomalies.
+
+\section{Methodology: The Dual-Condition Heuristic}
+\label{sec:ood_methodology}
+Our approach shifts away from traditional post-hoc continuous scoring functions and treats OOD detection as a strict rule-based anomaly rejection task within the K-NN latent space. 
+
+To determine whether an inference sample belongs to the ID manifold, we compare its histogram to the training set using the \textbf{Chi-Square ($\chi^2$) distance metric} like in \ref{sec:knn_classification}. However, relying solely on a distance threshold is insufficient due to the variable density of the latent space. Therefore, we introduce a dual-condition verification system that must trigger simultaneously to flag an image as OOD.
+
+\subsection{Distance Threshold ($T$) and Label Chaos ($C$)}
+\label{sec:distance_threshold_and_label_chaos}
+
+Let $x$ be an inference query and $N_K(x)$ be the set of its $K$ nearest neighbors in the ID training set. The two criteria are defined as follows:
+
+\begin{enumerate}
+    \item \textbf{Distance Threshold ($T$):} We evaluate the $\chi^2$ distance to the closest neighbor. If the distance exceeds a predefined threshold $T$, the sample is considered structurally distant from the known data manifold.
+    \item \textbf{Neighborhood Label Chaos ($C$):} We introduce a secondary structural variable, denoted as $C$, which measures the maximum allowable number of unique classes within the $K$ nearest neighbors.
+\end{enumerate}
+
+The final decision boundary dictates that a sample is flagged as OOD if and only if both the distance exceeds $T$ and the label chaos or exceeds $C$:
+\begin{equation}
+    \text{IsOOD}(x) = \begin{cases} 
+      1 & \text{if } D_{\chi^2}(x, N_K) > T \land | \text{UniqueClasses}(N_K(x)) | > C \\
+      0 & \text{otherwise}
+   \end{cases}
+\end{equation}
+
+\section{Dataset Selection for Benchmarking}
+\label{sec:ood_datasets}
+
+To rigorously evaluate the robustness of this dual-condition heuristic, we curated a specific set of ID and OOD datasets that challenge the model across various axes of semantic and structural shift.
+
+For the \textbf{ID} baseline, we have opted for \textbf{Caltech-101}. This dataset serves as a high-resolution, more complex equivalent to CIFAR-100.
+
+To benchmark the rejection capabilities, we introduced the following \textbf{OOD} datasets, each representing a distinct type of domain shift:
+\begin{itemize}
+    \item \textbf{DTD:} Tests the model's response to low-level structural patterns lacking high-level object semantics.
+    \item \textbf{SVHN:} Introduces a strict domain shift by testing the model on simple, structured digits that share no semantic overlap with Caltech-101.
+    \item \textbf{Scientific Images (scikit-image):} Introduces a domain shift towards microscopic and specialized imaging, testing robustness against non-photographic visual features.
+    \item \textbf{Places365:} Shifts the focus from object-centric compositions to broad, scene-centric environments, testing spatial and contextual boundaries.
+    \item \textbf{Pokemon:} Evaluates the boundary between photorealism and artistic illustration.
+\end{itemize}
+
+\section{Empirical Results: Chi-Square Decision Boundaries}
+\label{sec:ood_chi_results}
+
+We evaluated the dual-condition method by iterating over various combinations of $K$, threshold $T$, and Chaos variable $C$. Figure \ref{fig:ood_chi_iterations} visualizes the performance across five distinct configurations. Alongside the 2D decision boundary graphs outlining the OOD detection zones.
+
+% --- FIGURE: 5 Iterations of Chi-Square ---
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.85\textwidth}
+        \includegraphics[width=\textwidth]{figures/ood_benchmark/3NN_05T_1CH_KNN_CHI.png}
+        \caption{$K=3, T=0.5, C=1$}
+    \end{subfigure}
+    
+    \vspace{1.5em}
+    
+    \begin{subfigure}[b]{0.85\textwidth}
+        \includegraphics[width=\textwidth]{figures/ood_benchmark/7NN_05T_3CH_KNN_CHI.png}
+        \caption{$K=7, T=0.5, C=3$}
+    \end{subfigure}
+    
+    \vspace{1.5em}
+    
+    \begin{subfigure}[b]{0.85\textwidth}
+        \includegraphics[width=\textwidth]{figures/ood_benchmark/9NN_05T_5CH_KNN_CHI.png}
+        \caption{$K=9, T=0.5, C=5$}
+    \end{subfigure}
+    
+    \caption[Decision boundaries and performance metrics Chi-Square]{Decision boundaries and performance metrics for the dual-condition OOD detection using Chi-Square distance. The side panels highlight ID classes that OOD images most frequently mapped to. (Part 1 of 2)}
+    \label{fig:ood_chi_iterations_part1}
+\end{figure}
+
+\begin{figure}[htbp]
+    \ContinuedFloat % This tells LaTeX to keep the same Figure number
+    \centering
+    \begin{subfigure}[b]{0.85\textwidth}
+        \includegraphics[width=\textwidth]{figures/ood_benchmark/15NN_05T_9CH_KNN_CHI.png}
+        \caption{$K=15, T=0.5, C=9$}
+    \end{subfigure}
+    
+    \vspace{1.5em}
+    
+    \begin{subfigure}[b]{0.85\textwidth}
+        \includegraphics[width=\textwidth]{figures/ood_benchmark/25NN_05T_18CH_KNN_CHI.png}
+        \caption{$K=25, T=0.5, C=18$}
+    \end{subfigure}
+    
+    \caption[Decision boundaries and performance metrics Chi-Square]{Decision boundaries and performance metrics for the dual-condition OOD detection using Chi-Square distance. (Part 2 of 2)}
+    \label{fig:ood_chi_iterations}
+\end{figure}
+
+\vfill
+\newpage
+
+The performance of the dual-condition heuristic is summarized in Table \ref{tab:ood_performance_metrics}. Across the evaluated configurations (with a constant distance threshold of $T=0.5$), we observe a clear trade-off: as the neighborhood size $K$ and Chaos variable $C$ increase, the False Alarm ratesteadily drops.
+
+\begin{table}[htbp]
+    \centering
+    % If your template doesn't load booktabs, you might need \usepackage{booktabs} in your preamble
+    \begin{tabular}{@{}c c c c c@{}}
+        \toprule
+        \textbf{$K$-NN} & \textbf{Chaos ($C$)} & \textbf{OOD Recall} & \textbf{False Alarms} & \textbf{ID Accuracy} \\
+        \midrule
+        3  & 1  & 97.00\% & 0.52\% & 98.26\% \\
+        7  & 3  & 97.00\% & 0.46\% & 98.26\% \\
+        9  & 5  & 97.00\% & 0.29\% & 98.09\% \\
+        15 & 9  & 97.00\% & 0.17\% & 97.81\% \\
+        25 & 18 & 90.00\% & 0.06\% & 97.29\% \\
+        \bottomrule
+    \end{tabular}
+    \caption{Quantitative performance of the dual-condition OOD detection across varying neighborhood ($K$) and Label Chaos ($C$) parameters. The distance threshold is held constant at $T=0.5$.}
+    \label{tab:ood_performance_metrics}
+\end{table}
+
+The empirical data demonstrates that balancing the Chaos variable $C$ in proportion to $K$ successfully isolates regions of high uncertainty.
+
+\section{Comparative Analysis: The Failure of TF-IDF}
+\label{sec:ood_tfidf_failure}
+
+To validate our choice of the $\chi^2$ distance metric, we attempted to replicate the dual-condition heuristic using a TF-IDF weighting paired with Cosine Similarity. 
+
+Despite utilizing identical spatial setups and equivalent Chaos thresholds, the TF-IDF methodology performed significantly worse. As shown in Figure \ref{fig:ood_tfidf_failure}, the distributions of ID and OOD samples remained entangled. The cosine similarity failed to penalize structural deviations in the histograms, leading to a collapsed decision boundary where the dual-condition could not reliably operate without incurring massive False Positive rates.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.85\textwidth}
+        \includegraphics[width=\textwidth]{figures/ood_benchmark/7NN_07T_3CH_TD_IDF_COS.png}
+        \caption{TF-IDF: $K=7, T=0.7, C=3$}
+    \end{subfigure}
+    
+    \vspace{1.5em}
+    
+    \begin{subfigure}[b]{0.85\textwidth}
+        \includegraphics[width=\textwidth]{figures/ood_benchmark/9NN_07T_5CH_TD_IDF_COS.png}
+        \caption{TF-IDF: $K=9, T=0.7, C=5$}
+    \end{subfigure}
+    
+    \caption[Failure of the TF-IDF and Cosine Similarity]{Failure of the TF-IDF and Cosine Similarity configuration. The ID and OOD distributions show significant overlap, rendering the dual-condition thresholds ineffective.}
+    \label{fig:ood_tfidf_failure}
+\end{figure}
+
+\vfill
+
+\section{Failure Cases: Persistent False Negatives}
+\label{sec:ood_failure_cases}
+
+Despite the overall strong separability of the proposed method, certain anomalous samples consistently bypassed the detection heuristic. As visualized in Figure \ref{fig:ood_imposters}, these imposter images successfully evaded the system because their $\chi^2$ distances fell extremely close to, but just below, the required threshold $T$. 
+
+Even though their $K$-nearest neighbors consisted of several different classes—nearing the limit of our Label Chaos variable $C$—the strict dual-condition requirement was not simultaneously triggered. These edge cases highlight the inherent limitations of relying solely on Bag-of-Visual-Words histograms when global structural context is discarded.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/ood_benchmark/Imposter_9NN_05T_5CH_KNN_CHI.png}
+    \caption[Visualization of a persistent False Negative]{Visualization of a persistent False Negative ($K=9$). The OOD query was classified as ID because its $\chi^2$ distance remained just below the threshold, despite returning a chaotic mix of different neighbor classes.}
+    \label{fig:ood_imposters}
+\end{figure}
+
+\section{Comparative Evaluation Against Baseline OOD Methods}
+\label{sec:ood_comparative_baselines}
+
+To rigorously validate the efficacy of our proposed Dual-Condition K-NN approach, we conducted an independent set of benchmarking experiments. In this phase, we evaluated our method against three established Out-of-Distribution detection baselines: Maximum Softmax Probability, Energy-Based Scoring, and Deep Ensembles. 
+
+The evaluation relies on three standard threshold-independent and threshold-dependent metrics:
+\begin{itemize}
+    \item \textbf{AUROC:} Measures the overall discriminative power across all possible decision thresholds.
+    \item \textbf{AUPR:} Evaluates the trade-off between precision and recall, which is particularly sensitive to class imbalances .
+    \item \textbf{FPR95 (False Positive Rate at 95\% TPR):} Determines the probability that an OOD sample is incorrectly classified as ID when the True Positive Rate is held at an 95\%.
+\end{itemize}
+
+For these comparisons, Caltech-101 remained our fixed ID dataset. The comparative results are presented in Table \ref{tab:ood_baseline_comparison}.
+
+\subsection{Discussion of Results}
+
+The empirical results demonstrate that our proposed Dual-Condition K-NN architecture achieves state-of-the-art or highly competitive performance across virtually all tested domain shifts. 
+
+The most striking advantage of our method lies in the \textbf{FPR95 metric}. While traditional methods like MSP and Energy-scoring struggle to reject anomalous data without sacrificing ID accuracy (averaging 1.98\% and 5.62\% FPR95, respectively), our semantic histogram approach achieves an exceptional average FPR95 of \textbf{0.84\%}.
+
+While MSP marginally outperformed our method on the Pokemon dataset, our approach demonstrated vastly superior stability across the most challenging distributions.
+
+% --- COMPARATIVE TABLE ---
+\begin{table}[htbp]
+    \centering
+    \renewcommand{\arraystretch}{1.2} % Gives rows a bit more breathing room
+    \begin{tabular}{@{}llccc@{}}
+        \toprule
+        \textbf{OOD Dataset} & \textbf{Method} & \textbf{AUROC ($\uparrow$)} & \textbf{AUPR ($\uparrow$)} & \textbf{FPR95 ($\downarrow$)} \\
+        \midrule
+        \multirow{4}{*}{\textbf{DTD}} 
+        & Energy-Based       & 96.98\% & 94.18\% & 7.43\% \\
+        & MSP                & 99.08\% & 98.72\% & 2.02\% \\
+        & Deep Ensemble      & 98.48\% & 96.82\% & 3.80\% \\
+        & \textbf{Proposed}  & \textbf{99.41\%} & \textbf{98.80\%} & \textbf{1.09\%} \\
+        \midrule
+        \multirow{4}{*}{\textbf{SVHN}} 
+        & Energy-Based       & 96.02\% & 91.02\% & 7.26\% \\
+        & MSP                & 99.29\% & \textbf{98.80\%} & 1.79\% \\
+        & Deep Ensemble      & 98.24\% & 95.89\% & 4.55\% \\
+        & \textbf{Proposed}  & \textbf{99.45\%} & 98.33\% & \textbf{0.81\%} \\
+        \midrule
+        \multirow{4}{*}{\textbf{Pokemon}} 
+        & Energy-Based       & 99.52\% & 94.19\% & 0.75\% \\
+        & MSP                & \textbf{99.84\%} & \textbf{98.94\%} & \textbf{0.29\%} \\
+        & Deep Ensemble      & 99.76\% & 97.95\% & 0.46\% \\
+        & \textbf{Proposed}  & 99.40\% & 92.68\% & 0.81\% \\
+        \midrule
+        \multirow{4}{*}{\textbf{Scientific}} 
+        & Energy-Based       & 95.85\% & 12.20\% & 6.22\% \\
+        & MSP                & 99.28\% & 46.79\% & 1.61\% \\
+        & Deep Ensemble      & 98.53\% & 28.04\% & 2.48\% \\
+        & \textbf{Proposed}  & \textbf{99.54\%} & \textbf{55.93\%} & \textbf{0.69\%} \\
+        \midrule
+        \multirow{4}{*}{\textbf{Places365}} 
+        & Energy-Based       & 98.00\% & 96.27\% & 6.45\% \\
+        & MSP                & 99.01\% & \textbf{98.82\%} & 4.21\% \\
+        & Deep Ensemble      & 98.39\% & 97.49\% & 5.76\% \\
+        & \textbf{Proposed}  & \textbf{99.45\%} & 98.50\% & \textbf{0.81\%} \\
+        \midrule
+        \midrule
+        \multirow{4}{*}{\textbf{AVERAGE}} 
+        & Energy-Based       & 97.27\% & 77.57\% & 5.62\% \\
+        & MSP                & 99.30\% & 88.42\% & 1.98\% \\
+        & Deep Ensemble      & 98.68\% & 83.24\% & 3.41\% \\
+        & \textbf{Proposed}  & \textbf{99.45\%} & \textbf{88.85\%} & \textbf{0.84\%} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparative performance of our proposed OOD detection method against standard baseline architectures. Best results per dataset are highlighted in bold.}
+    \label{tab:ood_baseline_comparison}
+\end{table}
+
+\subsection{Limitations: The Low-Resolution Constraint}
+\label{sec:ood_limitations_resolution}
+
+While the proposed Dual-Condition heuristic demonstrates state-of-the-art performance on high-resolution datasets, its efficacy degrades catastrophically when applied to low-resolution imagery. To quantify this limitation, we replicated our baseline experiments using \textbf{CIFAR-100} ($32 \times 32$ pixels) as the ID dataset. 
+
+The structural failure of our method in this domain is directly tied to the architectural constraints of the DINOv3 backbone. DINOv3 processes images by extracting fixed $16 \times 16$ pixel patches. Consequently, a $32 \times 32$ CIFAR-100 image yields a grid of exactly $2 \times 2$ (only 4 patches). 
+
+Attempting to build a robust BoVW semantic histogram from merely 4 tokens is mathematically futile. The resulting feature distributions are entirely too sparse for the K-Means clustering and K-NN classification pipeline to extract meaningful structural variance. In contrast, ViTs specifically trained on lower resolutions with drastically smaller patch sizes (e.g., $4 \times 4$) would be required to yield a sufficiently dense patch distribution for our method to operate.
+
+As illustrated in Table \ref{tab:ood_cifar_failure}, the extreme sparsity causes our proposed method to collapse completely. While baseline methods like Energy-Based scoring and Deep Ensembles degrade gracefully on CIFAR-100, our spatial patch-based approach plummets to an average AUROC of 72.81\% and a practically unusable FPR95 of 69.52\%.
+
+% --- CIFAR-100 LIMITATION TABLE ---
+\begin{table}[htbp]
+    \centering
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{@{}llccc@{}}
+        \toprule
+        \textbf{OOD Dataset} & \textbf{Method} & \textbf{AUROC ($\uparrow$)} & \textbf{AUPR ($\uparrow$)} & \textbf{FPR95 ($\downarrow$)} \\
+        \midrule
+        \multirow{4}{*}{\textbf{DTD}} 
+        & Energy-Based       & 93.54\% & 63.38\% & \textbf{24.12\%} \\
+        & MSP                & 91.25\% & 54.72\% & 33.63\% \\
+        & Deep Ensemble      & \textbf{94.59\%} & \textbf{69.79\%} & 24.81\% \\
+        & Proposed Method    & 57.46\% & 11.32\% & 86.34\% \\
+        \midrule
+        \multirow{4}{*}{\textbf{SVHN}} 
+        & Energy-Based       & 89.41\% & 44.65\% & \textbf{43.89\%} \\
+        & MSP                & 85.95\% & 41.68\% & 54.38\% \\
+        & Deep Ensemble      & \textbf{89.83\%} & \textbf{55.38\%} & 45.85\% \\
+        & Proposed Method    & 75.81\% & 24.68\% & 71.89\% \\
+        \midrule
+        \multirow{4}{*}{\textbf{Pokemon}} 
+        & Energy-Based       & \textbf{99.47\%} & \textbf{90.37\%} & \textbf{2.37\%} \\
+        & MSP                & 97.40\% & 66.73\% & 10.53\% \\
+        & Deep Ensemble      & 98.87\% & 84.62\% & 4.91\% \\
+        & Proposed Method    & 90.01\% & 14.42\% & 36.27\% \\
+        \midrule
+        \multirow{4}{*}{\textbf{Scientific}} 
+        & Energy-Based       & 94.92\% & 2.95\% & 21.42\% \\
+        & MSP                & 89.04\% & 5.29\% & 31.03\% \\
+        & Deep Ensemble      & \textbf{95.01\%} & \textbf{5.86\%} & \textbf{17.46\%} \\
+        & Proposed Method    & 60.53\% & 0.27\% & 92.74\% \\
+        \midrule
+        \multirow{4}{*}{\textbf{Places365}} 
+        & Energy-Based       & \textbf{96.12\%} & \textbf{75.13\%} & \textbf{15.90\%} \\
+        & MSP                & 91.46\% & 53.48\% & 31.08\% \\
+        & Deep Ensemble      & 93.76\% & 65.14\% & 27.83\% \\
+        & Proposed Method    & 80.24\% & 27.36\% & 60.38\% \\
+        \midrule
+        \midrule
+        \multirow{4}{*}{\textbf{AVERAGE}} 
+        & Energy-Based       & \textbf{94.69\%} & 55.29\% & \textbf{21.54\%} \\
+        & MSP                & 91.02\% & 44.38\% & 32.13\% \\
+        & Deep Ensemble      & 94.41\% & \textbf{56.16\%} & 24.17\% \\
+        & Proposed Method    & 72.81\% & 15.61\% & 69.52\% \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparative performance using the low-resolution \textbf{CIFAR-100} ($32 \times 32$ px) as the In-Distribution dataset. Due to DINOv3's $16 \times 16$ patch constraint, the proposed method suffers from severe feature sparsity, failing completely compared to the standard baselines.}
+    \label{tab:ood_cifar_failure}
+\end{table}
+
 \chapter{Conclusion}
 \label{conclusion}
 
-This thesis explored whether the DINOv3 Vision Transformer is a suitable foundation for hierarchical image classification and Out-of-Distribution detection. We used several visualization techniques to analyze how the model understands images without being explicitly trained for these tasks.
+This thesis comprehensively investigated the viability of utilizing the DINOv3 Vision Transformer as a foundational architecture for hierarchical image classification and OOD detection. By systematically analyzing the model's internal representations without task-specific fine-tuning, we evaluated its capacity to inherently encode semantic hierarchies and spatially isolate visual concepts. Our methodology—spanning dimensionality reduction, self-attention scanning, and unsupervised patch clustering—demonstrated that DINOv3 establishes a highly discriminative, object-centric latent space. We successfully transitioned from analyzing raw, high-dimensional patch embeddings to constructing an interpretable semantic dictionary through BoVW and K-NN classification, validating the network's ability to abstract raw pixel statistics into unified semantic entities.
 
-Our experiments showed that DINOv3 creates very clear groups for natural images. In datasets like CIFAR-10 and Oxford-IIIT Pet, the model successfully keeps similar classes together. The t-SNE visualizations proved that the model is robust enough to handle different artistic styles, as seen in the Pokémon dataset. Additionally, by analyzing the network layer by layer, we confirmed that the model gradually builds understanding, moving from simple pixel patterns to meaningful concepts.
+\section{Computational and Theoretical Limitations}
+\label{sec:limitations}
 
-Furthermore, the attention maps revealed that the model naturally understands where objects are. It can isolate a subject from the background and group related parts without any supervision.
+While the DINOv3 architecture provides highly discriminative semantic representations, this performance comes at a substantial computational and spatial cost. The extraction of dense, patch-level embeddings imposes significant memory constraints and inference latency, primarily driven by the $O(N^2)$ algorithmic complexity of the self-attention mechanism with respect to sequence length. Consequently, processing high-resolution images or scaling BoVW codebook size introduces a severe computational bottleneck. 
 
-However, the model has clear limitations. It failed to separate classes in the SVHN dataset. This confirms that DINOv3 relies heavily on textures rather than geometric shapes. This "texture bias" is an important factor to consider when deploying the model.
+Furthermore, the deployment of a K-Nearest Neighbors classifier over a high-dimensional continuous latent space requires extensive memory allocation to store the reference support set, limiting its viability for real-time or edge-device deployment. From a statistical learning perspective, the immense parameter count and theoretical capacity of the Vision Transformer—reflecting an exceptionally high Vapnik-Chervonenkis (VC) dimension—pose inherent risks of overfitting if adapted naively. Although our methodology mitigates this by utilizing the model as a strictly frozen, post-hoc feature extractor, the underlying structural complexity remains a fundamental trade-off between semantic abstraction capabilities and algorithmic efficiency.
 
-In conclusion, the frozen DINOv3 model provides rich and useful features. Future work should focus on using these features to build a system that can not only detect unknown objects but also assign them to a general super-category, making AI systems safer and more interpretable.
+\section{Contributions}
+\label{sec:contributions}
+In terms of academic and practical contributions, this research provides a rigorous empirical framework for understanding the internal dynamics of frozen foundation models in the context of anomaly detection. We effectively bridged the gap between raw feature extraction and interpretable classification mapping. Furthermore, we empirically exposed the model's inherent texture bias, most notably through its failure to linearly separate geometric datasets like SVHN—and formally documented the semantic overlap anomaly, where traditional distance-based scoring functions falter due to shared underlying visual components rather than feature degradation. By comprehensively mapping both the capabilities and the structural limitations of self-supervised representations, this thesis offers researchers and practitioners critical insights necessary for the safe and predictable deployment of Vision Transformers in open-world environments.
+
+\section{Future Work}
+\label{sec:future_work}
+Building upon these findings, there is a compelling avenue for future research utilizing the proposed clustering algorithm to establish robust hierarchical OOD detection frameworks. Our experiments indicate a strong, inherent morphological affinity within the constructed visual codebooks. For instance, we observed that broader taxonomic categories, such as mammals and other animals, consistently shared a significant proportion of semantic clusters. Similarly, structurally analogous inanimate items, such as sharp objects (e.g., scissors and swords), exhibited a remarkably high feature overlap. These natural cluster intersections strongly suggest that when the model encounters an unseen or OOD sample, it projects the unknown input into a structurally related subspace rather than generating arbitrary noise. Future work should focus on mathematically leveraging this shared semantic vocabulary to develop a dynamic, coarse-to-fine hierarchical classifier—one that gracefully backs-off to predicting a generic super-category (e.g., ``animal'' or ``sharp tool'') when fine-grained leaf-level identification fails, thereby drastically improving the reliability and interpretability of modern AI systems.
+
 \printbibliography[title=Literature]
 
 \appendix
@@ -1059,8 +1407,9 @@ In conclusion, the frozen DINOv3 model provides rich and useful features. Future
         \textbf{CLIP}   & Contrastive Language-Image Pretraining \\
         \textbf{CLS} & Classification Token \\
         \textbf{DINO}   & Self-Distillation with No Labels \\
-        \textbf{DTD}    & Textures Dataset \\
+        \textbf{DTD}    & Describable Textures Dataset \\
         \textbf{FAISS}  & Facebook AI Similarity Search \\
+        \textbf{FPR95}  & False Positive Rate at 95\% TPR \\
         \textbf{ID}     & In-Distribution \\
         \textbf{K-NN}   & K-Nearest Neighbors \\
         \textbf{MSP}    & Maximum Softmax Probability \\
@@ -1076,10 +1425,14 @@ In conclusion, the frozen DINOv3 model provides rich and useful features. Future
         \textbf{TF-IDF} & Term Frequency-Inverse Document Frequency \\
         \textbf{t-SNE}  & t-Distributed Stochastic Neighbor Embedding \\
         \textbf{ViT}    & Vision Transformer \\
+        \textbf{VC}     & Vapnik-Chervonenkis \\
         \textbf{YOLO}   & You Only Look Once \\
         \textbf{WCSS}   & Within-cluster sum of squares \\
     \end{tabular}
 \end{center}
+
+\chapter{Source Code}
+\label{source_code}
 
 
 \end{document}
