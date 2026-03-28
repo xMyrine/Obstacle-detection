@@ -1369,6 +1369,57 @@ As illustrated in Table \ref{tab:ood_cifar_failure}, the extreme sparsity causes
     \label{tab:ood_cifar_failure}
 \end{table}
 
+\chapter{Real-World Demonstration and Application}
+\label{chap:demo_application}
+
+To validate the theoretical framework and the robustness of our proposed pipeline in unconstrained environments, we developed an interactive demonstration application.
+
+\section{Implementation Details}
+\label{sec:demo_implementation}
+
+Given the severe computational constraints and memory latency associated with deploying massive Vision Transformers in interactive or real-time environments (as will be further discussed in Section \ref{sec:limitations}), the demonstration engine substitutes the primary backbone with a more compact variant of the DINOv3 architecture. Specifically, this optimized model is truncated to contain only 12 hidden layers. This architectural reduction significantly accelerates forward-pass inference and limits the memory overhead required for self-attention computation, while still preserving a sufficiently discriminative semantic latent space to extract meaningful patch-level embeddings. 
+
+The complete source code, environment dependencies, and initialization scripts for this interactive application are provided in the attachment accompanying this thesis.
+
+\section{Qualitative Evaluation and Anomaly Detection}
+\label{sec:demo_evaluation}
+
+To evaluate the system qualitatively, the application processed various real-world images by computing BoVW histograms from 12-layer embeddings for K-NN classification. The pipeline demonstrated ID recognition, accurately abstracting and classifying faces (Figure \ref{fig:demo_faces}), headphones (Figure \ref{fig:demo_headphones}), and Garfield (Figure \ref{fig:demo_garfield}). 
+
+Crucially, the interactive application also validated the safety of our proposed Dual-Condition heuristic. When presented with an unseen, structurally divergent subject Pikachu, the system accurately quantified the semantic distributional shift and safely flagged the image as an OOD anomaly rather than assigning an erroneous class label (Figure \ref{fig:demo_pikachu_ood}).
+
+\begin{figure}[htbp]
+    \centering
+    % Replace with your actual file path
+    \includegraphics[width=0.7\textwidth]{figures/demo/faces_plot.png} 
+    \caption[Real-world recognition of human faces]{Real-world recognition of human faces. The compact 12-layer DINOv3 model successfully extracts defining semantic patches to correctly classify the ID subject.}
+    \label{fig:demo_faces}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    % Replace with your actual file path
+    \includegraphics[width=0.7\textwidth]{figures/demo/headphones_plot.png} 
+    \caption[Classification of headphones]{Successful structural representation and classification of inanimate objects (headphones) within the interactive pipeline.}
+    \label{fig:demo_headphones}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    % Replace with your actual file path
+    \includegraphics[width=0.7\textwidth]{figures/demo/garfield_plot.png} 
+    \caption[Classification of Garfield]{Classification of the animated subject (Garfield). The patch clustering accurately associates the morphological features with the established visual codebook.}
+    \label{fig:demo_garfield}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    % Replace with your actual file path
+    \includegraphics[width=0.7\textwidth]{figures/demo/pikachu_ood_plot.png} 
+    \caption[Successful OOD detection]{Successful OOD detection. Upon analyzing the features of an unseen class (Pikachu), the system registers an anomaly in the semantic distribution and correctly flags the subject as OOD.}
+    \label{fig:demo_pikachu_ood}
+\end{figure}
+
 \chapter{Conclusion}
 \label{conclusion}
 
@@ -1433,6 +1484,21 @@ Building upon these findings, there is a compelling avenue for future research u
 
 \chapter{Source Code}
 \label{source_code}
+
+The attached digital repository contains the essential code and serialized assets required to reproduce the interactive OOD detection demonstration:
+
+\section*{Execution Scripts}
+\begin{itemize}
+    \item \texttt{model\_download.ipynb}: Notebook for initializing the DINOv3 backbone, preparing datasets, and generating reference BoVW histograms.
+    \item \texttt{demo.py}: The primary Python script executing the real-time classification and anomaly detection application.
+\end{itemize}
+
+\section*{Serialized Model Assets}
+\begin{itemize}
+    \item \texttt{faiss\_dictionary\_small\_k1024.npy}: Pre-computed K-Means visual codebook ($K=1024$).
+    \item \texttt{knn\_reference\_small\_database.npz}: Reference database of In-Distribution semantic histograms for K-NN inference.
+    \item \texttt{model\_small\_config.json}: Hyperparameter configuration dictating distance and chaos thresholds.
+\end{itemize}
 
 
 \end{document}
