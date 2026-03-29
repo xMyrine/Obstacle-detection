@@ -1,5 +1,10 @@
 import cv2
 import torch
+
+# Workaround for Transformers 4.45+ expecting PyTorch 2.4+ `is_compiling` method
+if not hasattr(torch.compiler, 'is_compiling'):
+    torch.compiler.is_compiling = lambda: False
+
 import numpy as np
 import faiss
 import json
@@ -7,7 +12,7 @@ from PIL import Image
 from transformers import AutoImageProcessor, AutoModel
 from huggingface_hub import login
 
-HF_TOKEN = "YOUR TOKEN HERE"
+HF_TOKEN = "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"
 login(token=HF_TOKEN)
 
 
