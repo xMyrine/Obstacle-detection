@@ -7,7 +7,7 @@ from PIL import Image
 from transformers import AutoImageProcessor, AutoModel
 from huggingface_hub import login
 
-HF_TOKEN = "YOUR TOKEN HERE"
+HF_TOKEN = ""
 login(token=HF_TOKEN)
 
 

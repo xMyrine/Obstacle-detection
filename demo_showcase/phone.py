@@ -1,5 +1,6 @@
 import cv2
 import gradio as gr
+import numpy as np
 
 from demo import OODCameraDetector
 
@@ -12,14 +13,18 @@ def process_frame(image_frame):
     if image_frame is None:
         return None
 
+    image_frame = np.copy(image_frame)
+
     label, dist, chaos, is_ood = detector.predict(image_frame)
 
     color = (255, 0, 0) if is_ood else (0, 255, 0)
 
+    h, w = image_frame.shape[:2]
+
     cv2.putText(
         image_frame,
         label,
-        (20, 50),
+        (20, h - 60),
         cv2.FONT_HERSHEY_SIMPLEX,
         1.1,
         color,
@@ -31,7 +36,7 @@ def process_frame(image_frame):
     cv2.putText(
         image_frame,
         stats_text,
-        (20, 90),
+        (20, h - 20),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.7,
         (255, 255, 255),
@@ -53,5 +58,4 @@ interface = gr.Interface(
 
 
 if __name__ == "__main__":
-    interface.launch(server_name="0.0.0.0", server_port=7860)
-
+    interface.launch(server_name="0.0.0.0", server_port=7860, ssl_keyfile="key.pem", ssl_certfile="cert.pem", ssl_verify=False)
