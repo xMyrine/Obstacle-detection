@@ -73,17 +73,17 @@
 
     I am profoundly thankful to my girlfriend for her boundless patience,   understanding, and emotional support. 
 
-    I also wish to thank my family for their lifelong presence, and     particularly for granting me an unprecedented, continuous week of   absolute solitude during the most critical phase of my writing.   Additionally, I must acknowledge my long-time strategic collaborator on the Summoner's Rift, whose relentless pursuit of the Challenger tier  provided a recurring and highly effective test of my focus and time-management skills throughout the drafting process.
+    I also wish to thank my family for their lifelong presence, and     particularly for granting me an unprecedented, continuous week of   absolute solitude during the most critical phase of my writing. 
 
     Finally, I extend my appreciation to the \textit{Centrum Znalostního Managementu}. My experience there offered profound clarity regarding my professional trajectory, definitively confirming my strong preference for academic research over conventional corporate environments.
 }
 
 \begin{abstract-english}
-This thesis investigates hierarchical Out-of-Distribution detection using the self-supervised representations of the DINOv3 Vision Transformer. Unlike traditional global classification, our approach leverages localized semantic features by clustering image patches into a Bag of Visual Words representation. We evaluate post-hoc scoring methods, including ODIN, Energy-based scores, and K-Nearest Neighbors  with Chi-Square metrics, to distinguish known categories from unknown inputs. Benchmarking on datasets such as Food-101, Oxford Pets, and MNIST demonstrates that DINOv3’s high-dimensional latent space significantly enhances feature separation. The results show that localized hierarchical analysis improves the robustness of OOD detection, particularly for semantically ambiguous inputs.
+This thesis investigates Out-of-Distribution detection using the self-supervised representations of the DINOv3 Vision Transformer. Unlike traditional global classification, our approach leverages localized semantic features by clustering image patches into a Bag of Visual Words representation. We evaluate post-hoc scoring methods, including Energy-based scores, and K-Nearest Neighbors  with Chi-Square metrics, to distinguish known categories from unknown inputs. Benchmarking on datasets such as Caltech-101, Food-101, and CIFAR100 demonstrates that DINOv3’s high-dimensional latent space significantly enhances feature separation. The results show that localized hierarchical analysis improves the robustness of OOD detection, particularly for semantically ambiguous inputs.
 \end{abstract-english}
 
 \begin{abstract-czech}
-Tato bakalářská práce se zabývá hierarchickou detekcí dat mimo distribuci s využitím samo-učících se reprezentací vizuálního transformátoru DINOv3. Na rozdíl od tradiční globální klasifikace náš přístup využívá lokalizované sémantické příznaky shlukováním obrazových patchů do reprezentace typu „Bag of Visual Words“. K odlišení známých kategorií od neznámých vstupů vyhodnocujeme post-hoc metody skórování, včetně ODIN, energetického skórování a algoritmu K-nejbližších sousedů  s Chi-kvadrát metrikou. Benchmarking na datasetech Food-101, Oxford Pets a MNIST potvrzuje, že vysokodimenzionální latentní prostor modelu DINOv3 výrazně zlepšuje separaci příznaků. Výsledky ukazují, že lokalizovaná hierarchická analýza zvyšuje robustnost detekce OOD, zejména u sémanticky nejednoznačných vstupů.
+Tato bakalářská práce se zabývá detekcí dat mimo distribuci s využitím samo-učících se reprezentací transformeru DINOv3. Na rozdíl od tradiční globální klasifikace náš přístup využívá lokalizované sémantické příznaky shlukováním patchů do reprezentace typu „Bag of Visual Words“. K odlišení známých kategorií od neznámých vstupů vyhodnocujeme post-hoc metody , včetně energetického skórování a algoritmu K-nejbližších sousedů  s Chi-kvadrát metrikou. Benchmarking na datasetech Caltech-101, Food-101 a CIFAR101potvrzuje, že vysokodimenzionální latentní prostor modelu DINOv3 výrazně zlepšuje separaci příznaků. Výsledky ukazují, že lokalizovaná hierarchická analýza zvyšuje robustnost detekce OOD, zejména u sémanticky nejednoznačných vstupů.
 \end{abstract-czech}
 
 
@@ -93,7 +93,7 @@ Tato bakalářská práce se zabývá hierarchickou detekcí dat mimo distribuci
 
 \chapter{Introduction}
 \label{intro}
-Deep learning architectures are currently experiencing a substantial surge in prevalence. Convolutional Neural Networks (CNNs) and Vision Transformers (ViTs) have demonstrated remarkable performance in various computer vision tasks. However, the real world is full of unknowns, which poses serious challenges for these models. When deployed in dynamic environments, they often encounter inputs that differ significantly from their training data, leading to unreliable predictions, \textbf{as illustrated in Figure \ref{fig:yolo_fail}.} The task of identifying such inputs, known as out-of-distribution (OOD) detection, is crucial for ensuring the safety and reliability of AI systems.
+Deep learning architectures are currently experiencing a substantial surge in prevalence. Convolutional Neural Networks (CNNs) and Vision Transformers (ViTs) have demonstrated remarkable performance in various computer vision tasks. However, the real world is full of unknowns, which poses serious challenges for these models. When deployed in dynamic environments, they often encounter inputs that differ significantly from their training data, leading to unreliable predictions, \textbf{as illustrated in Figure \ref{fig:yolo_fail}.} The task of identifying such inputs, known as out-of-distribution (OOD) detection, is crucial for ensuring the safety and reliability of Artifical Intelligence (AI) systems.
 
 \begin{figure}[htbp]
     \centering
@@ -118,6 +118,12 @@ The primary objective of this thesis is to analyze DINOv3 internal representatio
     \item \textbf{Attention Mechanism Analysis:} To visualize self-attention maps and interpret how the model spatially isolates semantic objects from the background without supervision.
     
     \item \textbf{Layer-wise Evolution:} To track the trajectory of [CLS] tokens across network layers, identifying the specific depth where the model begins to separate distinct semantic concepts.
+
+    \item \textbf{Semantic Patch Clustering:} To construct a localized visual dictionary by extracting dense DINOv3 patch tokens and applying unsupervised K-Means clustering to map recurring structural patterns.
+    
+    \item \textbf{Dual-Condition Anomaly Detection:} To develop an OOD detection logic that flags unseen distributions by measuring both the spatial distance to known training features and the semantic chaos within the K-NN neighborhood.
+    
+    \item \textbf{Comparative Performance Evaluation:} To benchmark the custom histogram-based pipeline against standard linear probing baselines (MSP, Energy, Predictive Entropy) to determine if structural feature distributions offer superior OOD robustness compared to traditional logit-based confidence scores.
 \end{enumerate}
 
 
@@ -224,7 +230,7 @@ To evaluate the robustness and generalizability of the features learned by the D
 Prior to investigating the layer-wise evolution of features within the DINOv3 architecture, we conducted an initial assessment of the overall quality of the learned representations. This involved extracting feature embeddings from the final layer of the model for images across the selected datasets. 
 
 \subsection{Dimensionality Reduction and Visualization}
-To visuallize the high-dimensional feature space of the data and demonstrate class separability, we employed \textbf{PCA} to reduce the dimensionality of the embeddings from $\mathbb{R}^{1024}$ to $\mathbb{R}^2$ and $\mathbb{R}^3$.
+To visuallize the high-dimensional feature space of the data and demonstrate class separability, we employed \textbf{PCA} to reduce the dimensionality of the embeddings from $\mathbb{R}^{4096}$ to $\mathbb{R}^2$ and $\mathbb{R}^3$.
 
 The goal was to project the \textit{final} representations of either the entire dataset or a subset onto a common manifold. This visualization helped us to confirm the following properties:
 \begin{itemize}
@@ -294,7 +300,7 @@ Consequently, the model likely creates multiple sub-clusters for a single class 
     \label{fig:pokemon_pca}
 \end{figure}
 
-\subsection{Failure Case: Street View House Numbers (SVHN)}
+\subsection{Failure Case: Street View House Numbers}
 A notable deviation is observed with the SVHN dataset, where PCA fails to separate digit classes ($0-9$), forming a single overlapped cloud as shown in Figure~\ref{fig:svhn_pca}.
 
 We attribute this failure to the model's inherent \textbf{texture bias}. Unlike natural objects, digits are defined purely by geometry rather than semantic textures (e.g., fur or foliage). Furthermore, background clutter often occupies more area than the digit itself. Without fine-tuning, the encoder likely prioritizes these background textures over the structural signal of the class label.
@@ -321,7 +327,7 @@ We attribute this failure to the model's inherent \textbf{texture bias}. Unlike 
 \section{Feature representation via t-SNE}
 \label{sec:feature_representation_tsne}
 
-While PCA effectively demonstrates the separability of classes, it is inherently a linear technique. To ensure that we did not overlook complex, non-linear structures in the feature space, we also applied \textbf{t-Distributed Stochastic Neighbor Embedding (t-SNE)} \cite{JMLR:v9:vandermaaten08a,}.
+While PCA effectively demonstrates the separability of classes, it is inherently a linear technique. To ensure that we did not overlook complex, non-linear structures in the feature space, we also applied \textbf{t-Distributed Stochastic Neighbor Embedding} \cite{JMLR:v9:vandermaaten08a,}.
 
 \subsection{Motivation and Methodology}
 Unlike PCA, t-SNE is a probabilistic technique designed to preserve local neighborhood structures. It is particularly effective at revealing clusters in data where the relationship between classes is non-linear. We hypothesized that t-SNE might uncover finer sub-structures or better resolve classes that appeared only weakly separated in the linear PCA projection (e.g., some Pokémon classes).
@@ -400,7 +406,7 @@ The application of t-SNE yielded a distinct visual improvement over PCA, produci
 \section{Layer-wise Feature Evolution and Trajectory Analysis}
 \label{sec:visualization}
 
-To qualitatively analyze the internal dynamics of the DINOv3 architecture~\cite{siméoni2025dinov3}, we developed a visualization pipeline capable of mapping the high-dimensional latent space of 1024 dimensions into a 3-dimensional RGB colour space. This process, which we refer to as a ``Layer-wise Feature Trajectory,'' allows for the observation of semantic evolution as information propagates from the input layers to the deep semantic layers. The use of PCA to inspect the semantic layout of self-supervised features follows methodologies established in DINO-based research~\cite{siméoni2025dinov3}.
+To effectively analyze the internal dynamics of the DINOv3 architecture~\cite{siméoni2025dinov3}, we developed a visualization pipeline capable of mapping the high-dimensional latent space of  dimensions into a 3-dimensional RGB colour space. This process, which we refer to as a ``Layer-wise Feature Trajectory,'' allows for the observation of semantic evolution as information propagates from the input layers to the deep semantic layers. The use of PCA to inspect the semantic layout of self-supervised features follows methodologies established in DINO-based research~\cite{siméoni2025dinov3}.
 
 \subsection{Data Extraction and Pre-processing}
 The extraction mechanism relies on registering \textit{forward hooks} within the PyTorch framework. We iterate through the model's architecture to identify the transformer blocks (specifically \texttt{model.encoder.layer}) and intercept the output tensor $O^{(l)}$ at each layer $l \in \{0, \dots, L-1\}$.
@@ -408,9 +414,10 @@ The extraction mechanism relies on registering \textit{forward hooks} within the
 For a given input image, the output at layer $l$ is a tensor of shape $(1, N_{seq}, D)$, where $N_{seq}$ represents the sequence length and $D$ is the embedding dimension. To visualize the spatial layout of features, we discard the special tokens—specifically the \texttt{[CLS]} token and the register tokens retaining only the patch tokens. These patch tokens are then reshaped back into a 2D grid corresponding to the original image topology ($H \times W$).
 
 \subsection{Dimensionality Reduction Strategies}
-Visualizing $D=1024$ dimensions requires projecting the data onto a lower-dimensional manifold. We implemented and compared two distinct strategies for this projection using PCA: \textit{Global PCA} and \textit{Local PCA}.
+Visualizing $D=4096$ dimensions requires projecting the data onto a lower-dimensional manifold. We implemented and compared two distinct strategies for this projection using PCA: \textit{Global PCA} and \textit{Local PCA}.
 
 \subsubsection{Method A: Global PCA (Trajectory Preservation)}
+\label{sec:method_a_global_pca}
 In the Global approach, we prioritize the temporal and geometric consistency of the features across the network depth. We aggregate the feature vectors from all layers $l$ and all spatial positions into a single global dataset $\mathbf{X}_{global}$:
 
 \begin{equation}
@@ -469,7 +476,7 @@ where $N$ is the total number of feature vectors across all layers $l$ and spati
 
 \textbf{Visual Outcome and Analysis:} Contrary to the uncentered Global PCA, applying mean subtraction resulted in a severe degradation of visual clarity. The resulting projections produced dim, desaturated, ``mud-like'' representations with arbitrary blue hues.
 
-This phenomenon can be explained by the geometric behavior of feature maps in deep neural networks. As features are processed from shallow to deep layers, they exhibit a massive directional shift through the high-dimensional space. In the uncentered approach (Method A), the primary principal components naturally align with this dominant drift trajectory, mapping the large magnitudes to bright, distinct RGB values. 
+This phenomenon can be explained by the geometric behavior of feature maps in deep neural networks. As features are processed from shallow to deep layers, they exhibit a massive directional shift through the high-dimensional space. In the uncentered approach \ref{sec:method_a_global_pca}, the primary principal components naturally align with this dominant drift trajectory, mapping the large magnitudes to bright, distinct RGB values. 
 
 Conversely, when the global mean is subtracted, this primary trajectory vector collapses to the origin. The centered PCA is forced to capture only the localized variance surrounding the global centroid. Because the magnitude of this localized variance is relatively small compared to the scale of the layer-wise drift, the projected values lack the amplitude required to drive the RGB channels to bright values. The overlapping, low-magnitude variances consequently manifest as dark, ambiguous colours, with specific hues (such as blue) dominating only if a particular variance direction aligns heavily with that colour channel.
 
@@ -755,7 +762,7 @@ Consequently, the models confidently---and correctly, from a semantic standpoint
 % ---------------------------------------------------------
 In order to investigate the localized semantic representations learned by the DINOv3 model, an unsupervised clustering approach was applied to individual image patches. High-resolution images of various mammals were selected to determine whether the model captures structural and semantic consistencies across different species within the same biological class. To ensure uniform processing, all input images were scaled to a standardized resolution of $512 \times 512$ pixels.
 
-The DINOv3 vision transformer processes each image by subdividing it into non-overlapping patches of size $16 \times 16$ pixels. For each patch, a high-dimensional feature vector was extracted from the deeper layers of the model. 
+The DINOv3 processes each image by subdividing it into non-overlapping patches of size $16 \times 16$ pixels. For each patch, a high-dimensional feature vector was extracted from the deeper layers of the model. 
 
 % ---------------------------------------------------------
 \subsection{Clustering Methodology}
@@ -793,7 +800,7 @@ This behavior is directly attributable to the positional encodings inherent to t
 % ---------------------------------------------------------
 Beyond spatial partitioning, the cluster maps reveal highly specialized semantic groupings. The foreground animal shapes are clearly segmented from the background, and the background itself is further divided into vertical boundaries and the underlying floor or terrain. 
 
-An interesting anomaly was observed in images containing zebras, which predominantly formed an isolated cluster. As highlighted in the composite visualization (Figure~\ref{fig:kmeans_composite}), we hypothesize that this divergence occurs because the zebra images frequently feature a herd or multiple intersecting animals, creating a pattern that the model maps differently compared to the single-subject compositions of other mammals.
+An interesting anomaly was observed in images containing zebras, which predominantly formed an isolated cluster. As highlighted in the composite visualization (Figure~\ref{fig:kmeans_composite}), we hypothesize that this divergence occurs because the zebra images feature a herd or multiple intersecting animals, creating a pattern that the model maps differently compared to the single-subject compositions of other mammals.
 
 Additionally, the representations demonstrate a strong dependency on the underlying terrain upon which the subjects are standing. The clustering algorithm successfully decoupled different floor textures, consistently assigning grassy terrains to a specific cluster, denoted by a pink hue in the visualization, while non-grassy or barren surfaces were segregated into a separate cluster, represented in dark blue. This distinction is visually evident in the overall mappings (Figure~\ref{fig:kmeans_composite}), highlighting the capacity of DINOv3 to simultaneously encode intricate local textures, broad environmental contexts, and spatial priors within its patch-level representations.
 
@@ -804,7 +811,7 @@ Additionally, the representations demonstrate a strong dependency on the underly
 \label{sec:kmeans_cropped_motivation}
 As observed in the previous uncropped clustering analysis (Section~\ref{sec:kmeans_clustering}), the DINOv3 representations exhibit a strong spatial bias due to the positional encodings such as terrain and exhibits a tendency to cluster based on background features. To evaluate the model's capacity to represent purely object-centric semantic features independent of their background noise and absolute spatial coordinates, we performed a secondary clustering analysis on a cropped version of the dataset.
 
-To achieve this, a Logistic Regression classifier was trained to act as a binary foreground-background segmentation module. By leveraging the deep features extracted from DINOv3, the linear model was optimized to precict binary mask. By leveraging the deep features extracted from DINOv3, the model was optimized to effectively distinguish the animal foreground from the surrounding environment. The $512 \times $512 images were subsequently masked and tightly cropped.
+To achieve this, a Logistic Regression classifier was trained to act as a binary foreground-background segmentation module. By leveraging the deep features extracted from DINOv3, the linear model was optimized to predict binary mask. By leveraging the deep features extracted from DINOv3, the model was optimized to effectively distinguish the animal foreground from the surrounding environment. The $512 \times $512 images were subsequently masked and tightly cropped.
 
 Following the foreground isolation, the standardized cropping pipeline resized the resulting images back to the uniform resolution required by the Vision Transformer. The DINOv3 model then processed these object-centric images, extracting $16 \times 16$ patch tokens exclusively from the anatomical features of the animals. 
 
@@ -821,7 +828,7 @@ The K-Means clustering algorithm was applied to this filtered subset of high-dim
 \subsection{Alleviation of Spatial Bias and Anatomical Groupings}
 \label{sec:kmeans_cropped_results}
 % ---------------------------------------------------------
-To further evaluate the robustness and generalization of the learned semantic representations, the dataset was expanded beyond mammalian subjects to include a broader taxonomy of animals. Additionally, an image of an inanimate object—a car—was introduced to the pipeline to determine whether the Vision Transformer perceives structural compositions of non-biological entities in a visually analogous manner. 
+To further evaluate the robustness and generalization of the learned semantic representations, the dataset was expanded beyond mammalian subjects to include a broader taxonomy of animals. Additionally, an image of an inanimate object such as car was introduced to the pipeline to determine whether the Vision Transformer perceives structural compositions of non-biological entities in a visually analogous manner. 
 
 An analysis of the resulting cluster-coloured patch maps reveals a highly consistent anatomical and spatial segmentation across the diverse subjects. By visualizing the optimal $K=6$ clusters, we observe that the K-Means algorithm partitioned the feature space into distinct, localized semantic concepts:
 \begin{itemize}
@@ -837,7 +844,7 @@ These mappings, illustrated in Figure~\ref{fig:kmeans_composite_cropped}, demons
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{figures/clustering/clustering_crop.png} 
-    \caption[Composite K-Means clustering on cropped subjects]{Composite K-Means clustering analysis for foreground-isolated patches across a diverse set of animals and a car. The visualization highlights the consistent semantic grouping of anatomical parts (e.g., heads in yellow, legs in green, bodies in purple) and the residual left-right spatial partitioning in the background.}
+    \caption[Composite K-Means clustering on cropped subjects]{Composite K-Means clustering analysis for foreground-isolated patches across a diverse set of animals and a car. The visualization highlights the consistent semantic grouping of anatomical parts and the background.}
     \label{fig:kmeans_composite_cropped}
 \end{figure}
 
@@ -845,7 +852,7 @@ These mappings, illustrated in Figure~\ref{fig:kmeans_composite_cropped}, demons
 \subsection{Feature Distribution and Histogram Analysis}
 \label{sec:kmeans_histogram_analysis}
 % ---------------------------------------------------------
-Following the establishment of this localized visual dictionary, we sought to quantify the overall semantic composition of each image. Rather than treating an image as a spatial grid of patches, it was abstracted into a "Bag of Visual Words" by computing the frequency distribution of its assigned cluster labels. 
+Following the establishment of this localized visual dictionary, we sought to quantify the overall semantic composition of each image. Rather than treating an image as a spatial grid of patches, it was abstracted into a Bag of Visual Words (BoVW) by computing the frequency distribution of its assigned cluster labels. 
 
 To ensure fair comparability across images that may vary slightly in their total number of extracted patches due to cropping dimensions, the raw frequency histograms were subjected to $L_1$ normalization. Let $c_i$ represent the raw count of patches assigned to the $i$-th cluster. The normalized bin value, $h_i$, is calculated as:
 \begin{equation}
@@ -898,7 +905,7 @@ To provide a concrete intuition of these semantic representations, Figure \ref{f
 \label{sec:knn_classification_distance_functions}
 For the K-NN classification itself, we evaluated the model across a diverse set of neighborhood sizes, testing $k \in \{1, 3, 7, 9, 11, 25\}$. To determine the most effective method for comparing our histogram representations, we assessed three distinct distance and similarity metrics:
 \begin{enumerate}
-    \item \textbf{Chi-Square Distance:} A standard and highly effective metric for comparing empirical probability distributions, which aligns with the histogram format of our Bag of Visual Words (BoVW) approach.
+    \item \textbf{Chi-Square Distance:} A standard and highly effective metric for comparing empirical probability distributions, which aligns with the histogram format of our BoVW approach.
     \item \textbf{TF-IDF with Cosine Similarity:} Term Frequency-Inverse Document Frequency weighting applied to the raw histograms, followed by cosine similarity. This adapts a proven technique from information retrieval to down-weight ubiquitous visual features and emphasize discriminative ones.
     \item \textbf{Hellinger Distance (via FAISS L2):} A robust measure for quantifying the similarity between two probability distributions, computed efficiently by applying L2 distance on square-root normalized histograms within the FAISS framework.
 \end{enumerate}
