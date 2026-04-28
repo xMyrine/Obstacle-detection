@@ -1491,6 +1491,7 @@ The attached digital repository contains the essential code and serialized asset
 \begin{itemize}
     \item \texttt{model\_download.ipynb}: Notebook for initializing the DINOv3 backbone, preparing datasets, and generating reference BoVW histograms.
     \item \texttt{demo.py}: The primary Python script executing the real-time classification and anomaly detection application.
+    \item \texttt{web.py}: A supplementary script that launches an interactive web interface using the Gradio framework, enabling real-time demonstration and visual evaluation of the out-of-distribution detection pipeline.
 \end{itemize}
 
 \section*{Serialized Model Assets}
@@ -1498,6 +1499,11 @@ The attached digital repository contains the essential code and serialized asset
     \item \texttt{faiss\_dictionary\_small\_k1024.npy}: Pre-computed K-Means visual codebook ($K=1024$).
     \item \texttt{knn\_reference\_small\_database.npz}: Reference database of In-Distribution semantic histograms for K-NN inference.
     \item \texttt{model\_small\_config.json}: Hyperparameter configuration dictating distance and chaos thresholds.
+\end{itemize}
+
+\section*{Research Notebooks}
+\begin{itemize}
+    \item \texttt{m0\_*.ipynb} -- \texttt{m14\_*.ipynb}: A comprehensive series of Jupyter notebooks documenting the progression of the experiments. These files contain the foundational research, feature visualization, semantic clustering, and benchmark evaluations conducted during the development of the hierarchical classification method.
 \end{itemize}
 
 
