@@ -1,0 +1,12 @@
+# Core engine
+numpy
+torch
+transformers
+huggingface-hub
+faiss-cpu
+pillow
+opencv-python
+
+# Web interface
+gradio
+
