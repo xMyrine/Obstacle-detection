@@ -110,7 +110,7 @@ To address these challenges, this thesis explores the capabilities of self-super
 \section{Goals}
 \label{sec:goals}
 
-The primary objective of this thesis is to analyze DINOv3 internal representations and evaluate their suitability for hierarchical classification. The specific goals are:
+The primary objective of this thesis is to analyze DINOv3 internal representations and evaluate their suitability for classification. The specific goals are:
 
 \begin{enumerate}
     \item \textbf{Feature Space Visualization:} To implement a feature extraction pipeline and analyze class separability using PCA and t-SNE dimensionality reduction on datasets such as CIFAR and Oxford-IIIT Pet.
@@ -428,7 +428,7 @@ To ensure that feature representations from different depths of the network are 
 
 Mathematically, this identifies the three principal components that explain the maximum variance across the \textit{full hierarchy} of the network. Once this fixed basis $W_{global}$ is established, we project the specific feature tensor $\mathbf{X}^{(l)}$ of every individual layer $l$ onto these static axes. By using a constant projection matrix for all layers, we ensure that the resulting colour shifts in the visualization represent genuine geometric transformations of the feature vectors (e.g., the data manifold rotating from a "pixel-correlation" subspace to a "semantic" subspace) rather than arbitrary statistical realignments between frames.
 
-\textbf{Visual Outcome:} This method results in a smooth colour progression. We observed a distinct shift from red hues in initial layers to azure/cyan hues in deeper layers. This indicates that the feature subspace occupied by raw visual patterns (shallow layers) is mathematically orthogonal to the subspace of semantic abstractions (deep layers). The colour shift effectively visualizes the ``drift'' of the image representation through the high-dimensional space. \textbf{This trajectory is visually summarized in Figure~\ref{fig:global_pca_grid}, where the subject (`Cat') transitions from a pixel-dominated red representation to a semantically abstract azure representation.}
+\textbf{Visual Outcome:} This method results in a smooth colour progression. We observed a distinct shift from red hues in initial layers to azure/cyan hues in deeper layers. This indicates that the feature subspace occupied by raw visual patterns (shallow layers) is mathematically orthogonal to the subspace of semantic abstractions (deep layers). The colour shift effectively visualizes the ``drift'' of the image representation through the high-dimensional space. \textbf{This trajectory is visually summarized in Figure~\ref{fig:global_pca_grid}, where the subject (`Cat') transitions from a pixel-dominated red representation to a semantically abstract azure representation. This semantic shift occurs as deeper layers aggregate local patches across expanded receptive fields, discarding low-level pixel variance to capture global, context-invariant object concepts.}
 
 \begin{figure}[htbp]
     \centering
@@ -706,7 +706,7 @@ The quantitative results, visualized in the Receiver Operating Characteristic (R
 
 However, as evident from the visibly sagging curves in Figure~\ref{fig:roc_curves}, performance on the Textures dataset presented a notable exception, yielding lower AUROC scores and higher False Positive Rates. Upon qualitative investigation, we discovered that this drop in statistical performance does not indicate a failure of the feature representation. Rather, it highlights a semantic overlap between the datasets: the Textures dataset inherently contains images of distinct food patterns (e.g., clustered berries, cross-sections of vegetables, woven pasta). 
 
-Consequently, the models confidently---and correctly, from a semantic standpoint---classified these specific OOD samples as ID (Food). To investigate this behavior, we extracted the highest-confidence false positive samples for both the Energy Score and Mahalanobis Distance at the 95\% TPR threshold, presented in Figure~\ref{fig:ood_false_positives}. It is visually evident from these visual samples that the ``misclassified'' texture images are, in fact, food items. 
+Consequently, the models confidently and correctly, from a semantic standpoint classified these specific OOD samples as ID (Food). To investigate this behavior, we extracted the highest-confidence false positive samples for both the Energy Score and Mahalanobis Distance at the 95\% TPR threshold, presented in Figure~\ref{fig:ood_false_positives}. It is visually evident from these visual samples that the ``misclassified'' texture images are, in fact, food items. 
 
 \textit{Note on ODIN Evaluation:} Due to the heavy computational overhead introduced by the iterative gradient-based input perturbations required for ODIN, we evaluated this specific method on a randomly sampled subset of the data. While the resulting ROC curve for ODIN (Figure~\ref{fig:roc_curves}c) displays a perfect 100\% AUROC on this specific subset, applying it to the overlapping food-texture samples yields the same semantically justified ``failures'' observed in the Energy and Mahalanobis methods.
 
@@ -807,15 +807,35 @@ Additionally, the representations demonstrate a strong dependency on the underly
 \section{K-Means Clustering on Foreground-Isolated Patch Representations}
 \label{sec:kmeans_cropped_clustering}
 
-\subsection{Motivation and Foreground segmentation}
+\subsection{Motivation and Foreground Segmentation}
 \label{sec:kmeans_cropped_motivation}
-As observed in the previous uncropped clustering analysis (Section~\ref{sec:kmeans_clustering}), the DINOv3 representations exhibit a strong spatial bias due to the positional encodings such as terrain and exhibits a tendency to cluster based on background features. To evaluate the model's capacity to represent purely object-centric semantic features independent of their background noise and absolute spatial coordinates, we performed a secondary clustering analysis on a cropped version of the dataset.
 
-To achieve this, a Logistic Regression classifier was trained to act as a binary foreground-background segmentation module. By leveraging the deep features extracted from DINOv3, the linear model was optimized to predict binary mask. By leveraging the deep features extracted from DINOv3, the model was optimized to effectively distinguish the animal foreground from the surrounding environment. The $512 \times $512 images were subsequently masked and tightly cropped.
+As observed in the previous uncropped clustering analysis (Section~\ref{sec:kmeans_clustering}), the DINOv3 representations exhibit a strong spatial bias due to positional encodings and a tendency to cluster based on background features (e.g., terrain, foliage, or sky). To evaluate the model's capacity to represent purely object-centric semantic features independent of their background noise and absolute spatial coordinates, a secondary clustering analysis was performed on a cropped, foreground-isolated version of the dataset.
 
-Following the foreground isolation, the standardized cropping pipeline resized the resulting images back to the uniform resolution required by the Vision Transformer. The DINOv3 model then processed these object-centric images, extracting $16 \times 16$ patch tokens exclusively from the anatomical features of the animals. 
+To achieve this isolation, a Logistic Regression classifier was trained on the frozen dense spatial features extracted by the DINOv3 backbone \cite{oquab2024dinov2learningrobustvisual}\footnote{The implementation for the linear probing and foreground segmentation pipeline utilizes the official code provided by Meta within the DINO framework.}. By mapping high-dimensional patch tokens to binary labels, this linear probe effectively delineated object boundaries utilizing only the pre-trained semantic representations. To refine the predictions, a 2D median filter was applied to the raw scores, which were subsequently thresholded to produce a definitive quantized mask (Figure~\ref{fig:fg_segmentation}).
 
-The K-Means clustering algorithm was applied to this filtered subset of high-dimensional feature vectors. Because the variance introduced by diverse backgrounds (e.g., grass, barren terrain, and sky) was eliminated, the optimal number of clusters, $K$, was re-evaluated using the Elbow method. Without the need to allocate cluster centroids to environmental textures, the algorithm was forced to partition the feature space based strictly on the morphological and textural variations of the animals themselves.
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/logistic_regression/input_logistic.png}
+        \caption{Input Image}
+        \label{fig:fg_input}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/logistic_regression/output_logistic.png}
+        \caption{Foreground Score}
+        \label{fig:fg_score}
+    \end{subfigure}
+    \caption{Foreground segmentation utilizing a Logistic Regression classifier trained on dense DINOv3 patch features. The quantized mask demonstrates a strict binary separation of the object from the background.}
+    \label{fig:fg_segmentation}
+\end{figure}
+
+Using the binary masks generated by this linear probe, the original $512 \times 512$ images were tightly cropped around the predicted animal foregrounds. Following this isolation, the standardized pipeline resized the resulting images back to the uniform resolution required by the Vision Transformer. The DINOv3 model then processed these object-centric images, extracting $16 \times 16$ patch tokens exclusively from the anatomical features of the subjects. 
+
+The K-Means clustering algorithm was subsequently applied to this filtered subset of high-dimensional feature vectors. Because the variance introduced by diverse backgrounds was eliminated, the optimal number of clusters, $K$, was re-evaluated using the Elbow method. Without the need to allocate cluster centroids to environmental textures, the algorithm was forced to partition the feature space based strictly on the morphological and textural variations of the animals themselves (Figure~\ref{fig:elbow_method_cropped}).
 
 \begin{figure}[htbp]
     \centering
@@ -889,9 +909,9 @@ The pairwise distances between all subjects were computed and are visualized in 
 
 Building upon the previous stage of our methodology, where we computed frequency histograms to represent the distinct semantic fingerprint of each image based on their patch distributions, we now formalize our classification pipeline. In this section, we present an extensive experiment evaluating the discriminative power of these histograms using a K-Nearest Neighbors (K-NN) classifier.
 
-To systematically analyze the impact of the vocabulary size (i.e., the number of visual words or clusters) on the classification performance, we parameterized our K-Means clustering algorithm to generate codebooks of varying dimensionalities, specifically $K \in \{16, 64, 256, 1024\}$. Given the high dimensionality of the DINOv3 feature vectors, the clustering process was accelerated using the Facebook AI Similarity Search (FAISS) library \cite{johnson2017billionscalesimilaritysearchgpus}, which provides highly efficient GPU-enabled implementations for similarity search and clustering of dense vectors. 
+To systematically analyze the impact of vocabulary size on classification performance, the K-Means clustering algorithm was applied across a range of cluster counts, specifically varying $K \in \{16, 64, 256, 1024\}$. Given the high dimensionality of the DINOv3 feature vectors, the clustering process was accelerated using the Facebook AI Similarity Search (FAISS) library \cite{johnson2017billionscalesimilaritysearchgpus}, which provides highly efficient GPU-enabled implementations for similarity search and clustering of dense vectors. 
 
-To provide a concrete intuition of these semantic representations, Figure \ref{fig:histogram_examples_k64} visualizes the computed frequency histograms for eight randomly selected Caltech-101 classes, utilizing a generated vocabulary size of $K=64$.
+To provide a concrete intuition of these semantic representations, Figure~\ref{fig:histogram_examples_k64} visualizes the class-level BoVW distributions for eight randomly selected categories from the Caltech-101 dataset. Each plot illustrates the aggregated frequency of the $K = 64$ visual words (cluster IDs) across all images belonging to that specific class.
 
 \begin{figure}[htbp]
     \centering
@@ -933,7 +953,7 @@ Figure \ref{fig:results_matrix_orig_chisq} presents the complete accuracy matrix
     \centering
     % Update with your actual figure path
     \includegraphics[width=0.8\textwidth]{figures/knn_no_ood_benchmarks/chi_full_matrix.png}
-    \caption[Classification accuracy matrix Chi-Square]{Classification accuracy matrix for Original images using Chi-Square distance across varying vocabulary sizes ($K$) and neighborhood counts ($k$).}
+    \caption[Classification accuracy matrix Chi-Square]{Classification accuracy matrix for Original images using Chi-Square distance across varying vocabulary sizes ($K$) and neighbor counts ($k$).}
     \label{fig:results_matrix_orig_chisq}
 \end{figure}
 
@@ -1322,7 +1342,7 @@ While the proposed Dual-Condition heuristic demonstrates state-of-the-art perfor
 
 The structural failure of our method in this domain is directly tied to the architectural constraints of the DINOv3 backbone. DINOv3 processes images by extracting fixed $16 \times 16$ pixel patches. Consequently, a $32 \times 32$ CIFAR-100 image yields a grid of exactly $2 \times 2$ (only 4 patches). 
 
-Attempting to build a robust BoVW semantic histogram from merely 4 tokens is mathematically futile. The resulting feature distributions are entirely too sparse for the K-Means clustering and K-NN classification pipeline to extract meaningful structural variance. In contrast, ViTs specifically trained on lower resolutions with drastically smaller patch sizes (e.g., $4 \times 4$) would be required to yield a sufficiently dense patch distribution for our method to operate.
+Attempting to build a robust BoVW semantic histogram from merely 4 tokens is mathematically futile. The resulting feature distributions are too sparse for the K-Means clustering and K-NN classification pipeline to extract meaningful structural variance. In contrast, ViTs specifically trained on lower resolutions with drastically smaller patch sizes (e.g., $4 \times 4$) would be required to yield a sufficiently dense patch distribution for our method to operate.
 
 As illustrated in Table \ref{tab:ood_cifar_failure}, the extreme sparsity causes our proposed method to collapse completely. While baseline methods like Energy-Based scoring and Deep Ensembles degrade gracefully on CIFAR-100, our spatial patch-based approach plummets to an average AUROC of 72.81\% and a practically unusable FPR95 of 69.52\%.
 
