@@ -79,7 +79,7 @@
 }
 
 \begin{abstract-english}
-This thesis investigates Out-of-Distribution detection using the self-supervised representations of the DINOv3 Vision Transformer. Unlike traditional global classification, our approach leverages localized semantic features by clustering image patches into a Bag of Visual Words representation. We evaluate post-hoc scoring methods, including Energy-based scores, and K-Nearest Neighbors  with Chi-Square metrics, to distinguish known categories from unknown inputs. Benchmarking on datasets such as Caltech-101, Food-101, and CIFAR100 demonstrates that DINOv3’s high-dimensional latent space significantly enhances feature separation. The results show that localized hierarchical analysis improves the robustness of OOD detection, particularly for semantically ambiguous inputs.
+This thesis investigates Out-of-Distribution detection using the self-supervised representations of the DINOv3 Vision Transformer. Unlike traditional global classification, our approach leverages localized semantic features by clustering image patches into a Bag of Visual Words representation. We evaluate post-hoc scoring methods, including Energy-based scores, and K-Nearest neighbours  with Chi-Square metrics, to distinguish known categories from unknown inputs. Benchmarking on datasets such as Caltech-101, Food-101, and CIFAR100 demonstrates that DINOv3’s high-dimensional latent space significantly enhances feature separation. The results show that localized hierarchical analysis improves the robustness of OOD detection, particularly for semantically ambiguous inputs.
 \end{abstract-english}
 
 \begin{abstract-czech}
@@ -102,6 +102,8 @@ Deep learning architectures are currently experiencing a substantial surge in pr
     \label{fig:yolo_fail}
 \end{figure}
 
+\vfill
+
 Previous research has primarily focused on binary OOD detection, where models must distinguish only between in-distribution (ID) and OOD samples.\cite{wallin2025prohocprobabilistichierarchicaloutofdistribution}
 While this is an important step towards robust AI, it does not fully capture the complexity of real-world scenarios. For example, when an autonomous vehicle encounters an unseen input, it is insufficient to simply flag it as OOD. Instead, a hierarchical approach assigns it to a generic class (e.g., `obstacle'), preserving semantic information essential for decision-making.
 
@@ -110,7 +112,7 @@ To address these challenges, this thesis explores the capabilities of self-super
 \section{Goals}
 \label{sec:goals}
 
-The primary objective of this thesis is to analyze DINOv3 internal representations and evaluate their suitability for hierarchical classification. The specific goals are:
+The primary objective of this thesis is to analyze DINOv3 internal representations and evaluate their suitability for classification. The specific goals are:
 
 \begin{enumerate}
     \item \textbf{Feature Space Visualization:} To implement a feature extraction pipeline and analyze class separability using PCA and t-SNE dimensionality reduction on datasets such as CIFAR and Oxford-IIIT Pet.
@@ -121,7 +123,7 @@ The primary objective of this thesis is to analyze DINOv3 internal representatio
 
     \item \textbf{Semantic Patch Clustering:} To construct a localized visual dictionary by extracting dense DINOv3 patch tokens and applying unsupervised K-Means clustering to map recurring structural patterns.
     
-    \item \textbf{Dual-Condition Anomaly Detection:} To develop an OOD detection logic that flags unseen distributions by measuring both the spatial distance to known training features and the semantic chaos within the K-NN neighborhood.
+    \item \textbf{Dual-Condition Anomaly Detection:} To develop an OOD detection logic that flags unseen distributions by measuring both the spatial distance to known training features and the semantic chaos within the K-NN neighbourhood.
     
     \item \textbf{Comparative Performance Evaluation:} To benchmark the custom histogram-based pipeline against standard linear probing baselines (MSP, Energy, Predictive Entropy) to determine if structural feature distributions offer superior OOD robustness compared to traditional logit-based confidence scores.
 \end{enumerate}
@@ -211,7 +213,7 @@ In the context of OOD detection, this structure provides a robust fallback mecha
 \label{our_research}
 The initial phase of this research consisted of assessing the efficacy of DINOv3 feature representations for our OOD problem. A critical requirement for our task is the model's ability to enforce tight grouping of semantically similar classes in the feature space while maintaining separability from distinct concepts.
 
-To verify this property, we extracted feature embeddings from diverse datasets and applied dimensionality reduction techniques such as Principal Component Analysis (PCA) and t-Distributed Stochastic Neighbor Embedding (t-SNE). 
+To verify this property, we extracted feature embeddings from diverse datasets and applied dimensionality reduction techniques such as Principal Component Analysis (PCA) and t-Distributed Stochastic neighbour Embedding (t-SNE). 
 
 \section{Dataset Selection}
 \label{sec:dataset_selection}
@@ -327,13 +329,13 @@ We attribute this failure to the model's inherent \textbf{texture bias}. Unlike 
 \section{Feature representation via t-SNE}
 \label{sec:feature_representation_tsne}
 
-While PCA effectively demonstrates the separability of classes, it is inherently a linear technique. To ensure that we did not overlook complex, non-linear structures in the feature space, we also applied \textbf{t-Distributed Stochastic Neighbor Embedding} \cite{JMLR:v9:vandermaaten08a,}.
+While PCA effectively demonstrates the separability of classes, it is inherently a linear technique. To ensure that we did not overlook complex, non-linear structures in the feature space, we also applied \textbf{t-Distributed Stochastic neighbour Embedding} \cite{JMLR:v9:vandermaaten08a,}.
 
 \subsection{Motivation and Methodology}
-Unlike PCA, t-SNE is a probabilistic technique designed to preserve local neighborhood structures. It is particularly effective at revealing clusters in data where the relationship between classes is non-linear. We hypothesized that t-SNE might uncover finer sub-structures or better resolve classes that appeared only weakly separated in the linear PCA projection (e.g., some Pokémon classes).
+Unlike PCA, t-SNE is a probabilistic technique designed to preserve local neighbourhood structures. It is particularly effective at revealing clusters in data where the relationship between classes is non-linear. We hypothesized that t-SNE might uncover finer sub-structures or better resolve classes that appeared only weakly separated in the linear PCA projection (e.g., some Pokémon classes).
 
 \subsection{Comparative Analysis: Cleaner Separation and Non-Linearity}
-The application of t-SNE yielded a distinct visual improvement over PCA, producing significantly cleaner and more compact clusters. By prioritizing local neighborhood preservation, t-SNE was able to resolve boundaries that appeared diffuse in the linear projection.
+The application of t-SNE yielded a distinct visual improvement over PCA, producing significantly cleaner and more compact clusters. By prioritizing local neighbourhood preservation, t-SNE was able to resolve boundaries that appeared diffuse in the linear projection.
 
 \textbf{General Benchmarks:} For standard datasets like CIFAR-10, Food-101, and Oxford-IIIT Pet, the clusters became tighter and more isolated, reinforcing the robust semantic separability of the DINOv3 features. This general performance is visualized in Figure~\ref{fig:tsne_general}.
 
@@ -428,7 +430,7 @@ To ensure that feature representations from different depths of the network are 
 
 Mathematically, this identifies the three principal components that explain the maximum variance across the \textit{full hierarchy} of the network. Once this fixed basis $W_{global}$ is established, we project the specific feature tensor $\mathbf{X}^{(l)}$ of every individual layer $l$ onto these static axes. By using a constant projection matrix for all layers, we ensure that the resulting colour shifts in the visualization represent genuine geometric transformations of the feature vectors (e.g., the data manifold rotating from a "pixel-correlation" subspace to a "semantic" subspace) rather than arbitrary statistical realignments between frames.
 
-\textbf{Visual Outcome:} This method results in a smooth colour progression. We observed a distinct shift from red hues in initial layers to azure/cyan hues in deeper layers. This indicates that the feature subspace occupied by raw visual patterns (shallow layers) is mathematically orthogonal to the subspace of semantic abstractions (deep layers). The colour shift effectively visualizes the ``drift'' of the image representation through the high-dimensional space. \textbf{This trajectory is visually summarized in Figure~\ref{fig:global_pca_grid}, where the subject (`Cat') transitions from a pixel-dominated red representation to a semantically abstract azure representation.}
+\textbf{Visual Outcome:} This method results in a smooth colour progression. We observed a distinct shift from red hues in initial layers to azure/cyan hues in deeper layers. This indicates that the feature subspace occupied by raw visual patterns (shallow layers) is mathematically orthogonal to the subspace of semantic abstractions (deep layers). The colour shift effectively visualizes the ``drift'' of the image representation through the high-dimensional space. \textbf{This trajectory is visually summarized in Figure~\ref{fig:global_pca_grid}, where the subject (`Cat') transitions from a pixel-dominated red representation to a semantically abstract azure representation. This semantic shift occurs as deeper layers aggregate local patches across expanded receptive fields, discarding low-level pixel variance to capture global, context-invariant object concepts.}
 
 \begin{figure}[htbp]
     \centering
@@ -687,7 +689,55 @@ This behavior extends to complex scenes. In the cityscape example (Figure~\ref{f
 \section{Out-of-Distribution Detection Methods}
 \label{sec:ood_methods}
 
-To evaluate the robustness and generalizability of the learned representations, we conducted a series of OOD detection experiments. In this setup, the Food-101 dataset was designated as the ID baseline. We then evaluated the model's ability to distinguish these ID samples from three distinct OOD datasets: Oxford-IIIT Pet, FGVC Aircraft, and the Describable Textures Dataset (DTD). To preserve high-frequency visual details crucial for both fine-grained classification and texture recognition, all images were uniformly processed through a $512 \times 512$ resolution pipeline.
+To evaluate the robustness and generalizability of the learned representations, we conducted a series of Out-of-Distribution (OOD) detection experiments. In this setup, the Food-101 dataset was designated as the In-Distribution (ID) baseline. We then evaluated the model's ability to distinguish these ID samples from three distinct OOD datasets: Oxford-IIIT Pet, FGVC Aircraft, and the Describable Textures Dataset (DTD). The quantitative breakdown of the datasets used in this evaluation is detailed in Table~\ref{tab:dataset_stats}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Dataset statistics for In-Distribution (ID) and Out-of-Distribution (OOD) evaluation.}
+    \label{tab:dataset_stats}
+    \begin{tabular}{@{}lcc@{}}
+        \toprule
+        \textbf{Dataset} & \textbf{Total Images} & \textbf{Total Classes} \\
+        \midrule
+        Food-101 (ID) & 25,250 & 101 \\
+        Oxford-IIIT Pet (OOD) & 3,669 & 37 \\
+        FGVC Aircraft (OOD) & 3,333 & 100 \\
+        DTD (OOD) & 1,880 & 47 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+To preserve high-frequency visual details crucial for both fine-grained classification and texture recognition, all images were uniformly processed through a $512 \times 512$ resolution pipeline. The qualitative effects of this preprocessing step are illustrated in the subsequent figures, which contrast the original high-resolution inputs with the standardized inputs fed into the DINOv3 architecture.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/dataset_showcase/food.png}
+    \caption{Diversity check for the Food-101 dataset (ID). The top row displays the original images alongside their respective class labels, while the bottom row visualizes the processed $512 \times 512$ inputs prepared for the DINOv3 pipeline.}
+    \label{fig:diversity_food}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/dataset_showcase/oxford_pets.png}
+    \caption{Diversity check for the Oxford-IIIT Pet dataset (OOD). Images are shown before (top) and after (bottom) uniform $512 \times 512$ resolution processing.}
+    \label{fig:diversity_pets}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/dataset_showcase/aircraft.png}
+    \caption{Diversity check for the FGVC Aircraft dataset (OOD). Images are shown before (top) and after (bottom) uniform $512 \times 512$ resolution processing.}
+    \label{fig:diversity_aircraft}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/dataset_showcase/textures.png}
+    \caption{Diversity check for the Describable Textures Dataset (DTD) (OOD). Images are shown before (top) and after (bottom) uniform $512 \times 512$ resolution processing.}
+    \label{fig:diversity_textures}
+\end{figure}
+
+\vfill
 
 \subsection{Linear Probe and Scoring Functions}
 Foundation models such as DINOv3 inherently output high-dimensional feature embeddings rather than class-specific logits. However, several prominent post-hoc OOD detection algorithms operate directly on the logit space of a classifier. To bridge this gap without distorting the pre-trained manifold via full fine-tuning, we trained a simple Linear Probe on top of the frozen DINOv3 embeddings. This yielded the necessary pre-softmax logits for our target ID classes (Food-101).
@@ -706,7 +756,7 @@ The quantitative results, visualized in the Receiver Operating Characteristic (R
 
 However, as evident from the visibly sagging curves in Figure~\ref{fig:roc_curves}, performance on the Textures dataset presented a notable exception, yielding lower AUROC scores and higher False Positive Rates. Upon qualitative investigation, we discovered that this drop in statistical performance does not indicate a failure of the feature representation. Rather, it highlights a semantic overlap between the datasets: the Textures dataset inherently contains images of distinct food patterns (e.g., clustered berries, cross-sections of vegetables, woven pasta). 
 
-Consequently, the models confidently---and correctly, from a semantic standpoint---classified these specific OOD samples as ID (Food). To investigate this behavior, we extracted the highest-confidence false positive samples for both the Energy Score and Mahalanobis Distance at the 95\% TPR threshold, presented in Figure~\ref{fig:ood_false_positives}. It is visually evident from these visual samples that the ``misclassified'' texture images are, in fact, food items. 
+Consequently, the models confidently and correctly, from a semantic standpoint classified these specific OOD samples as ID (Food). To investigate this behavior, we extracted the highest-confidence false positive samples for both the Energy Score and Mahalanobis Distance at the 95\% TPR threshold, presented in Figure~\ref{fig:ood_false_positives}. It is visually evident from these visual samples that the ``misclassified'' texture images are, in fact, food items. 
 
 \textit{Note on ODIN Evaluation:} Due to the heavy computational overhead introduced by the iterative gradient-based input perturbations required for ODIN, we evaluated this specific method on a randomly sampled subset of the data. While the resulting ROC curve for ODIN (Figure~\ref{fig:roc_curves}c) displays a perfect 100\% AUROC on this specific subset, applying it to the overlapping food-texture samples yields the same semantically justified ``failures'' observed in the Energy and Mahalanobis methods.
 
@@ -764,16 +814,15 @@ In order to investigate the localized semantic representations learned by the DI
 
 The DINOv3 processes each image by subdividing it into non-overlapping patches of size $16 \times 16$ pixels. For each patch, a high-dimensional feature vector was extracted from the deeper layers of the model. 
 
-% ---------------------------------------------------------
 \subsection{Clustering Methodology}
 \label{sec:kmeans_methodology}
 % ---------------------------------------------------------
-To group these dense feature vectors into distinct visual concepts, the K-Means clustering algorithm was utilized. The optimal number of clusters, denoted as $K$, was systematically determined using the Elbow method \cite{Kodinariya2013ReviewOD}, which evaluates the explained variance as a function of the number of clusters (depicted in Figure~\ref{fig:elbow_method}).
+To group the dense feature vectors into distinct visual concepts, the K-Means clustering algorithm was applied. The number of clusters, denoted as $K$, was evaluated over the range $K \in [1,16]$ using the Elbow method \cite{Kodinariya2013ReviewOD}. Since the within-cluster sum of squares (WCSS) curve did not exhibit a pronounced elbow, $K=6$ was selected empirically as it provided a suitable balance between semantic separation and cluster granularity for the downstream classification pipeline.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{figures/clustering/elbow_method_no_crop.png} 
-    \caption[Composite K-Means clustering analysis for mammals]{Elbow method for determining the optimal number of clusters $K$ in the K-Means algorithm applied to DINOv3 patch representations. The plot illustrates the within-cluster sum of squares (WCSS) as a function of $K$, with a inflection point observed at $K=6$, indicating that this is the optimal number of clusters for capturing the underlying structure in the feature space.}
+    \caption[WCSS analysis for K-Means clustering of mammals]{WCSS as a function of the number of clusters $K$ for K-Means clustering applied to DINOv3 patch representations. Although no distinct elbow is observed, $K=6$ was selected empirically based on the resulting semantic cluster quality.}
     \label{fig:elbow_method}
 \end{figure}
 
@@ -807,20 +856,40 @@ Additionally, the representations demonstrate a strong dependency on the underly
 \section{K-Means Clustering on Foreground-Isolated Patch Representations}
 \label{sec:kmeans_cropped_clustering}
 
-\subsection{Motivation and Foreground segmentation}
+\subsection{Motivation and Foreground Segmentation}
 \label{sec:kmeans_cropped_motivation}
-As observed in the previous uncropped clustering analysis (Section~\ref{sec:kmeans_clustering}), the DINOv3 representations exhibit a strong spatial bias due to the positional encodings such as terrain and exhibits a tendency to cluster based on background features. To evaluate the model's capacity to represent purely object-centric semantic features independent of their background noise and absolute spatial coordinates, we performed a secondary clustering analysis on a cropped version of the dataset.
 
-To achieve this, a Logistic Regression classifier was trained to act as a binary foreground-background segmentation module. By leveraging the deep features extracted from DINOv3, the linear model was optimized to predict binary mask. By leveraging the deep features extracted from DINOv3, the model was optimized to effectively distinguish the animal foreground from the surrounding environment. The $512 \times $512 images were subsequently masked and tightly cropped.
+As observed in the previous uncropped clustering analysis (Section~\ref{sec:kmeans_clustering}), the DINOv3 representations exhibit a strong spatial bias due to positional encodings and a tendency to cluster based on background features (e.g., terrain, foliage, or sky). To evaluate the model's capacity to represent purely object-centric semantic features independent of their background noise and absolute spatial coordinates, a secondary clustering analysis was performed on a cropped, foreground-isolated version of the dataset.
 
-Following the foreground isolation, the standardized cropping pipeline resized the resulting images back to the uniform resolution required by the Vision Transformer. The DINOv3 model then processed these object-centric images, extracting $16 \times 16$ patch tokens exclusively from the anatomical features of the animals. 
+To achieve this isolation, a Logistic Regression classifier was trained on the frozen dense spatial features extracted by the DINOv3 backbone \cite{oquab2024dinov2learningrobustvisual}\footnote{The implementation for the linear probing and foreground segmentation pipeline utilizes the official code provided by Meta within the DINO framework.}. By mapping high-dimensional patch tokens to binary labels, this linear probe effectively delineated object boundaries utilizing only the pre-trained semantic representations. To refine the predictions, a 2D median filter was applied to the raw scores, which were subsequently thresholded to produce a definitive quantized mask (Figure~\ref{fig:fg_segmentation}).
 
-The K-Means clustering algorithm was applied to this filtered subset of high-dimensional feature vectors. Because the variance introduced by diverse backgrounds (e.g., grass, barren terrain, and sky) was eliminated, the optimal number of clusters, $K$, was re-evaluated using the Elbow method. Without the need to allocate cluster centroids to environmental textures, the algorithm was forced to partition the feature space based strictly on the morphological and textural variations of the animals themselves.
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/logistic_regression/input_logistic.png}
+        \caption{Input Image}
+        \label{fig:fg_input}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/logistic_regression/output_logistic.png}
+        \caption{Foreground Score}
+        \label{fig:fg_score}
+    \end{subfigure}
+    \caption{Foreground segmentation utilizing a Logistic Regression classifier trained on dense DINOv3 patch features. The quantized mask demonstrates a strict binary separation of the object from the background.}
+    \label{fig:fg_segmentation}
+\end{figure}
+
+Using the binary masks generated by this linear probe, the original $512 \times 512$ images were tightly cropped around the predicted animal foregrounds. Following this isolation, the standardized pipeline resized the resulting images back to the uniform resolution required by the Vision Transformer. The DINOv3 model then processed these object-centric images, extracting $16 \times 16$ patch tokens exclusively from the anatomical features of the subjects. 
+
+The K-Means clustering algorithm was subsequently applied to the filtered subset of high-dimensional feature vectors. The number of clusters, $K$, was re-evaluated over the range $K \in [1,16]$ using the Elbow method \cite{Kodinariya2013ReviewOD}. Following the same criteria described previously, $K=6$ was selected as it provided an effective balance between semantic separation and cluster granularity. By removing background information, the clustering process focused primarily on the morphological and textural characteristics of the animals themselves (Figure~\ref{fig:elbow_method_cropped}).
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{figures/clustering/elbow_method_cropped.png} 
-    \caption[Elbow method for foreground-isolated clustering]{Elbow method evaluation for K-Means clustering applied to foreground-isolated DINOv3 patch representations. The removal of background features alters the within-cluster sum of squares (WCSS) trajectory, reflecting a purely object-centric latent space.}
+    \caption[Elbow method for foreground-isolated clustering]{Within-cluster sum of squares (WCSS) as a function of the number of clusters $K$ for K-Means clustering applied to foreground-isolated DINOv3 patch representations.}
     \label{fig:elbow_method_cropped}
 \end{figure}
 
@@ -830,7 +899,7 @@ The K-Means clustering algorithm was applied to this filtered subset of high-dim
 % ---------------------------------------------------------
 To further evaluate the robustness and generalization of the learned semantic representations, the dataset was expanded beyond mammalian subjects to include a broader taxonomy of animals. Additionally, an image of an inanimate object such as car was introduced to the pipeline to determine whether the Vision Transformer perceives structural compositions of non-biological entities in a visually analogous manner. 
 
-An analysis of the resulting cluster-coloured patch maps reveals a highly consistent anatomical and spatial segmentation across the diverse subjects. By visualizing the optimal $K=6$ clusters, we observe that the K-Means algorithm partitioned the feature space into distinct, localized semantic concepts:
+An analysis of the resulting cluster-coloured patch maps reveals a highly consistent anatomical and spatial segmentation across the diverse subjects. By visualizing $K=6$ clusters, we observe that the K-Means algorithm partitioned the feature space into distinct, localized semantic concepts:
 \begin{itemize}
     \item \textbf{Cluster 4 (Yellow):} Predominantly encapsulates the heads or facial structures of the animals.
     \item \textbf{Cluster 1 (Green):} Isolates the lower extremities and legs.
@@ -887,11 +956,11 @@ The pairwise distances between all subjects were computed and are visualized in 
 \section{K-NN Classification}
 \label{sec:knn_classification}
 
-Building upon the previous stage of our methodology, where we computed frequency histograms to represent the distinct semantic fingerprint of each image based on their patch distributions, we now formalize our classification pipeline. In this section, we present an extensive experiment evaluating the discriminative power of these histograms using a K-Nearest Neighbors (K-NN) classifier.
+Building upon the previous stage of our methodology, where we computed frequency histograms to represent the distinct semantic fingerprint of each image based on their patch distributions, we now formalize our classification pipeline. In this section, we present an extensive experiment evaluating the discriminative power of these histograms using a K-Nearest neighbours (K-NN) classifier.
 
-To systematically analyze the impact of the vocabulary size (i.e., the number of visual words or clusters) on the classification performance, we parameterized our K-Means clustering algorithm to generate codebooks of varying dimensionalities, specifically $K \in \{16, 64, 256, 1024\}$. Given the high dimensionality of the DINOv3 feature vectors, the clustering process was accelerated using the Facebook AI Similarity Search (FAISS) library \cite{johnson2017billionscalesimilaritysearchgpus}, which provides highly efficient GPU-enabled implementations for similarity search and clustering of dense vectors. 
+To systematically analyze the impact of vocabulary size on classification performance, the K-Means clustering algorithm was applied across a range of cluster counts, specifically varying $K \in \{16, 64, 256, 1024\}$. Given the high dimensionality of the DINOv3 feature vectors, the clustering process was accelerated using the Facebook AI Similarity Search (FAISS) library \cite{johnson2017billionscalesimilaritysearchgpus}, which provides highly efficient GPU-enabled implementations for similarity search and clustering of dense vectors. 
 
-To provide a concrete intuition of these semantic representations, Figure \ref{fig:histogram_examples_k64} visualizes the computed frequency histograms for eight randomly selected Caltech-101 classes, utilizing a generated vocabulary size of $K=64$.
+To provide a concrete intuition of these semantic representations, Figure~\ref{fig:histogram_examples_k64} visualizes the class-level BoVW distributions for eight randomly selected categories from the Caltech-101 dataset. Each plot illustrates the aggregated frequency of the $K = 64$ visual words (cluster IDs) across all images belonging to that specific class.
 
 \begin{figure}[htbp]
     \centering
@@ -903,7 +972,7 @@ To provide a concrete intuition of these semantic representations, Figure \ref{f
 
 \subsection{Distance Functions}
 \label{sec:knn_classification_distance_functions}
-For the K-NN classification itself, we evaluated the model across a diverse set of neighborhood sizes, testing $k \in \{1, 3, 7, 9, 11, 25\}$. To determine the most effective method for comparing our histogram representations, we assessed three distinct distance and similarity metrics:
+For the K-NN classification itself, we evaluated the model across a diverse set of neighbourhood sizes, testing $k \in \{1, 3, 7, 9, 11, 25\}$. To determine the most effective method for comparing our histogram representations, we assessed three distinct distance and similarity metrics:
 \begin{enumerate}
     \item \textbf{Chi-Square Distance:} A standard and highly effective metric for comparing empirical probability distributions, which aligns with the histogram format of our BoVW approach.
     \item \textbf{TF-IDF with Cosine Similarity:} Term Frequency-Inverse Document Frequency weighting applied to the raw histograms, followed by cosine similarity. This adapts a proven technique from information retrieval to down-weight ubiquitous visual features and emphasize discriminative ones.
@@ -925,15 +994,15 @@ Our evaluation was conducted using the Caltech-101 dataset. To rigorously assess
 
 In this subsection, we present the classification results obtained using the unaltered, original Caltech-101 images. This acts as our primary baseline to which future modifications will be compared. We provide a comprehensive performance overview through a series of matrices and qualitative visualizations.
 
-An important observation universal to all tested metrics on this dataset variation is the convergence of model performance. The highest accuracies were consistently achieved with a vocabulary size of $K=1024$ and using $k=9$ nearest neighbors. Increasing parameters beyond these points did not yield significant gains in classification accuracy. Conversely, utilizing larger vocabularies or neighborhood counts resulted solely in increased model complexity and substantially longer evaluation times, as the dimensionalities of both the histogram vectors and the search space grew without commensurate improvements in discriminative power.
+An important observation universal to all tested metrics on this dataset variation is the convergence of model performance. The highest accuracies were consistently achieved with a vocabulary size of $K=1024$ and using $k=9$ nearest neighbours. Increasing parameters beyond these points did not yield significant gains in classification accuracy. Conversely, utilizing larger vocabularies or neighbourhood counts resulted solely in increased model complexity and substantially longer evaluation times, as the dimensionalities of both the histogram vectors and the search space grew without commensurate improvements in discriminative power.
 
-Figure \ref{fig:results_matrix_orig_chisq} presents the complete accuracy matrix for the K-NN classifier utilizing the Chi-Square distance metric, covering every combination of vocabulary size ($K$) and neighborhood count ($k$). As mentioned in Section \ref{sec:knn_classification}, this metric generally provided the strongest results for our visual word distributions.
+Figure \ref{fig:results_matrix_orig_chisq} presents the complete accuracy matrix for the K-NN classifier utilizing the Chi-Square distance metric, covering every combination of vocabulary size ($K$) and neighbourhood count ($k$). As mentioned in Section \ref{sec:knn_classification}, this metric generally provided the strongest results for our visual word distributions.
 
 \begin{figure}[htbp]
     \centering
     % Update with your actual figure path
     \includegraphics[width=0.8\textwidth]{figures/knn_no_ood_benchmarks/chi_full_matrix.png}
-    \caption[Classification accuracy matrix Chi-Square]{Classification accuracy matrix for Original images using Chi-Square distance across varying vocabulary sizes ($K$) and neighborhood counts ($k$).}
+    \caption[Classification accuracy matrix Chi-Square]{Classification accuracy matrix for Original images using Chi-Square distance across varying vocabulary sizes ($K$) and neighbour counts ($k$).}
     \label{fig:results_matrix_orig_chisq}
 \end{figure}
 
@@ -948,20 +1017,20 @@ Similarly, Figure \ref{fig:results_matrix_orig_tfidf} visualizes the performance
 
 Experiments were also conducted on the original images using the Hellinger distance via the efficient FAISS L2 implementation. While these results demonstrated robust behavior comparable to the methodologies discussed above, they did not offer distinct mathematical insights or significantly improved trends over the primary comparisons shown in Figures \ref{fig:results_matrix_orig_chisq} and \ref{fig:results_matrix_orig_tfidf}. Therefore, to maintain concise reporting of results, the detailed plotting matrix for this configuration is omitted, as it offers limited marginal information.
 
-Finally, to gain qualitative insight into the failure modes of our baseline models, Figures \ref{fig:failures_original_k256_chisq} and \ref{fig:failures_original_k256_tfidf} present a selection of misclassified test images using a vocabulary size of $K=256$ for the Chi-Square and TF-IDF metrics, respectively. Both figures are organized into four columns displaying, from left to right: the original query image, the clustering visualization of the query image, the erroneously retrieved closest training neighbor, and the clustering visualization of that neighbor. These visual examples highlight instances where structural similarities or shared background contexts in the DINOv3 feature space overpowered the true categorical labels. Notably, during the TF-IDF evaluation (Figure \ref{fig:failures_original_k256_tfidf}), the model misclassified an image belonging to the \textit{Faces} category as \textit{Faces\_easy}. Given the obvious semantic overlap between these two categories, we will merge them into a single class in our subsequent experiments to prevent artificial penalization of the model's accuracy.
+Finally, to gain qualitative insight into the failure modes of our baseline models, Figures \ref{fig:failures_original_k256_chisq} and \ref{fig:failures_original_k256_tfidf} present a selection of misclassified test images using a vocabulary size of $K=256$ for the Chi-Square and TF-IDF metrics, respectively. Both figures are organized into four columns displaying, from left to right: the original query image, the clustering visualization of the query image, the erroneously retrieved closest training neighbour, and the clustering visualization of that neighbour. These visual examples highlight instances where structural similarities or shared background contexts in the DINOv3 feature space overpowered the true categorical labels. Notably, during the TF-IDF evaluation (Figure \ref{fig:failures_original_k256_tfidf}), the model misclassified an image belonging to the \textit{Faces} category as \textit{Faces\_easy}. Given the obvious semantic overlap between these two categories, we will merge them into a single class in our subsequent experiments to prevent artificial penalization of the model's accuracy.
 
 \begin{figure}[htbp]
     \centering
     % Update with your actual figure path for Chi-Square failures
     \includegraphics[width=0.95\textwidth]{figures/knn_no_ood_benchmarks/chi_square_fail.png}
-    \caption[Analysis of K-NN failure cases Chi-Square]{Qualitative analysis of K-NN failure cases on Original images using the Chi-Square distance ($K=256$). The columns show, from left to right: (1) the original query image, (2) the query image colored by cluster ID assignment, (3) the retrieved closest training neighbor, and (4) the training neighbor colored by cluster ID.}
+    \caption[Analysis of K-NN failure cases Chi-Square]{Qualitative analysis of K-NN failure cases on Original images using the Chi-Square distance ($K=256$). The columns show, from left to right: (1) the original query image, (2) the query image colored by cluster ID assignment, (3) the retrieved closest training neighbour, and (4) the training neighbour colored by cluster ID.}
     \label{fig:failures_original_k256_chisq}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{figures/knn_no_ood_benchmarks/tdidf_fail.png}
-    \caption[Analysis of K-NN failure cases TF-IDF]{Qualitative analysis of K-NN failure cases on Original images using TF-IDF with Cosine Similarity ($K=256$). The columns show, from left to right: (1) the original query image, (2) the query image colored by cluster ID assignment, (3) the retrieved closest training neighbor, and (4) the training neighbor colored by cluster ID. Note the semantic misclassification of a \textit{Faces} sample as \textit{Faces\_easy}.}
+    \caption[Analysis of K-NN failure cases TF-IDF]{Qualitative analysis of K-NN failure cases on Original images using TF-IDF with Cosine Similarity ($K=256$). The columns show, from left to right: (1) the original query image, (2) the query image colored by cluster ID assignment, (3) the retrieved closest training neighbour, and (4) the training neighbour colored by cluster ID. Note the semantic misclassification of a \textit{Faces} sample as \textit{Faces\_easy}.}
     \label{fig:failures_original_k256_tfidf}
 \end{figure}
 
@@ -1025,13 +1094,13 @@ Figure \ref{fig:foreground_segmentation_examples} provides a visualization of th
 
 Assessably, the application of this foreground masking resulted in a slightly degraded overall classification accuracy across our K-NN experiments when compared to the original, unmodified images. This performance drop can be attributed to two primary factors. Firstly, the aforementioned segmentation inaccuracies occasionally discarded object features, depriving the histograms of semantic visual words. Secondly, the complete removal of the background eliminates critical environmental context. In many visual classification tasks, the background acts as a strong contextual prior; the surrounding environment often dictates the probability of a specific object's presence. By forcing the classifier to rely strictly on the morphology of the object without its environmental cues, the model becomes more susceptible to confusing structurally similar objects that would otherwise be easily distinguished by their differing natural habitats or surrounding contexts.
 
-Despite the slight drop in peak accuracy, the general convergence trends remained consistent with the baseline experiments. To provide a comprehensive overview of the classifier's behavior under this dataset modification, Figures \ref{fig:matrix_cropped_chisq}, \ref{fig:matrix_cropped_hellinger}, and \ref{fig:matrix_cropped_tfidf} present the full plotting matrices for the Chi-Square distance, FAISS L2 Hellinger distance, and TF-IDF with Cosine Similarity, respectively. As before, the metrics were evaluated across the full spectrum of vocabulary sizes ($K$) and neighborhood counts ($k$).
+Despite the slight drop in peak accuracy, the general convergence trends remained consistent with the baseline experiments. To provide a comprehensive overview of the classifier's behavior under this dataset modification, Figures \ref{fig:matrix_cropped_chisq}, \ref{fig:matrix_cropped_hellinger}, and \ref{fig:matrix_cropped_tfidf} present the full plotting matrices for the Chi-Square distance, FAISS L2 Hellinger distance, and TF-IDF with Cosine Similarity, respectively. As before, the metrics were evaluated across the full spectrum of vocabulary sizes ($K$) and neighbourhood counts ($k$).
 
 \begin{figure}[htbp]
     \centering
     % Update with your actual figure path
     \includegraphics[width=0.8\textwidth]{figures/knn_no_ood_benchmarks/cropped_chi_full_matrix.png}
-    \caption[Cropped Images: Chi-Square Accuracy]{Classification accuracy matrix for Cropped Foreground images using the Chi-Square distance across varying vocabulary sizes ($K$) and neighborhood counts ($k$).}
+    \caption[Cropped Images: Chi-Square Accuracy]{Classification accuracy matrix for Cropped Foreground images using the Chi-Square distance across varying vocabulary sizes ($K$) and neighbourhood counts ($k$).}
     \label{fig:matrix_cropped_chisq}
 \end{figure}
 
@@ -1071,7 +1140,7 @@ The complete performance metrics for this dataset modification are visualized be
     \centering
     % The width is set wider since this image contains TWO matrices
     \includegraphics[width=0.9\textwidth]{figures/knn_no_ood_benchmarks/vectors_cropped_matrix_chi_faiss.png}
-    \caption[Filtered Images: Chi-Square and L2 Accuracy]{Classification accuracy matrices for Filtered images. (Left) Chi-Square distance. (Right) FAISS L2 Hellinger distance. Both are evaluated across varying vocabulary sizes ($K$) and neighborhood counts ($k$).}
+    \caption[Filtered Images: Chi-Square and L2 Accuracy]{Classification accuracy matrices for Filtered images. (Left) Chi-Square distance. (Right) FAISS L2 Hellinger distance. Both are evaluated across varying vocabulary sizes ($K$) and neighbourhood counts ($k$).}
     \label{fig:matrix_filtered_chisq_l2}
 \end{figure}
 
@@ -1085,7 +1154,7 @@ The complete performance metrics for this dataset modification are visualized be
 
 \chapter{Proposed Dual-Condition Out-of-Distribution Detection}
 \label{chap:proposed_ood_detection}
-Building upon the feature representations and clustering mechanisms explored in the previous chapters, this final analytical chapter introduces an OOD detection heuristic. We extend the K-Nearest Neighbors classification pipeline established in Section \ref{sec:knn_classification_results_original}, leveraging the semantic histograms of image patches to separate ID samples from unseen anomalies.
+Building upon the feature representations and clustering mechanisms explored in the previous chapters, this final analytical chapter introduces an OOD detection heuristic. We extend the K-Nearest neighbours classification pipeline established in Section \ref{sec:knn_classification_results_original}, leveraging the semantic histograms of image patches to separate ID samples from unseen anomalies.
 
 \section{Methodology: The Dual-Condition Heuristic}
 \label{sec:ood_methodology}
@@ -1096,17 +1165,34 @@ To determine whether an inference sample belongs to the ID manifold, we compare 
 \subsection{Distance Threshold ($T$) and Label Chaos ($C$)}
 \label{sec:distance_threshold_and_label_chaos}
 
-Let $x$ be an inference query and $N_K(x)$ be the set of its $K$ nearest neighbors in the ID training set. The two criteria are defined as follows:
+Let $x$ be an inference query and $N_K(x)$ be the set of its $K$ nearest neighbours in the ID training set. The two criteria are defined as follows:
 
 \begin{enumerate}
-    \item \textbf{Distance Threshold ($T$):} We evaluate the $\chi^2$ distance to the closest neighbor. If the distance exceeds a predefined threshold $T$, the sample is considered structurally distant from the known data manifold.
-    \item \textbf{Neighborhood Label Chaos ($C$):} We introduce a secondary structural variable, denoted as $C$, which measures the maximum allowable number of unique classes within the $K$ nearest neighbors.
+    \item \textbf{Distance Threshold ($T$):} We evaluate the $\chi^2$ distance to the closest neighbour. If the distance exceeds a predefined threshold $T$, the sample is considered structurally distant from the known data manifold.
+    \item \textbf{neighbourhood Label Chaos ($C$) and Semantic Consistency:} We introduce $C$, the maximum allowable unique classes within the $K$ nearest neighbours, as a proxy for local semantic consistency. Within the framework of information theory, $C$ correlates with the Shannon entropy of the neighbourhood's class distribution:
+    
+    $$H(x) = - \sum_{i=1}^{C} p_i \log(p_i)$$
+    
+    where $p_i$ is the fraction of neighbours in $N_K(x)$ belonging to class $i$. ID queries typically form dense, homogeneous clusters ($H(x) \approx 0$), whereas OOD samples map to sparse or overlapping regions, yielding mixed, high-entropy neighbourhoods. By thresholding $C$, we filter these high-entropy OOD inputs, restricting accepted predictions to stable, consistent local manifolds.
 \end{enumerate}
 
-The final decision boundary dictates that a sample is flagged as OOD if and only if both the distance exceeds $T$ and the label chaos or exceeds $C$:
+To rigorously define the OOD detection boundary, we first formalize the local neighbourhood of a query sample $x$. Let $N_K(x)$ denote the set of the $K$ nearest neighbours to $x$ in the representation space, defined as:
 \begin{equation}
-    \text{IsOOD}(x) = \begin{cases} 
-      1 & \text{if } D_{\chi^2}(x, N_K) > T \land | \text{UniqueClasses}(N_K(x)) | > C \\
+    N_K(x) = \{(x_1, y_1), (x_2, y_2), \dots, (x_K, y_K)\}
+\end{equation}
+where $x_i$ represents the feature vector of the $i$-th neighbour and $y_i \in \mathcal{Y}$ is its corresponding ground-truth label.
+
+To quantify the local semantic consistency, we isolate the set of labels present within this neighbourhood:
+\begin{equation}
+    Y_K(x) = \{y_i \mid (x_i, y_i) \in N_K(x)\}
+\end{equation}
+Because $Y_K(x)$ is a set, it inherently contains only unique elements. Consequently, the cardinality of this set, $|Y_K(x)|$, yields the exact number of unique classes within the $K$-nearest neighbours.
+
+The final decision boundary dictates that a sample is flagged as OOD if and only if both the $\chi^2$ distance exceeds a threshold $T$ and the neighbourhood label cardinality strictly exceeds the chaos limit $C$. We express this via the indicator function $\mathbb{I}_{\text{OOD}}(x)$:
+\begin{equation}
+    \mathbb{I}_{\text{OOD}}(x) = 
+    \begin{cases} 
+      1 & \text{if } D_{\chi^2}(x, N_K(x)) > T \land |Y_K(x)| > C \\
       0 & \text{otherwise}
    \end{cases}
 \end{equation}
@@ -1130,14 +1216,16 @@ To benchmark the rejection capabilities, we introduced the following \textbf{OOD
 \section{Empirical Results: Chi-Square Decision Boundaries}
 \label{sec:ood_chi_results}
 
-We evaluated the dual-condition method by iterating over various combinations of $K$, threshold $T$, and Chaos variable $C$. Figure \ref{fig:ood_chi_iterations} visualizes the performance across five distinct configurations. Alongside the 2D decision boundary graphs outlining the OOD detection zones.
+\section{Empirical Results: Chi-Square Decision Boundaries}
+\label{sec:ood_chi_results}
+To validate the dual-condition method, we systematically explored the hyperparameter space defined by the neighbourhood size $K$, the distance threshold $T$, and the chaos limit $C$. Figure \ref{fig:ood_chi_iterations} illustrates the model's performance across five representative configurations, accompanied by 2D decision boundary visualizations that explicitly delineate the OOD rejection zones.
 
 % --- FIGURE: 5 Iterations of Chi-Square ---
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.85\textwidth}
         \includegraphics[width=\textwidth]{figures/ood_benchmark/3NN_05T_1CH_KNN_CHI.png}
-        \caption{$K=3, T=0.5, C=1$}
+        \caption{$K=3, T=0.5, C=1$. Note that setting the chaos limit to $C=1$ effectively neutralizes the semantic consistency condition, reducing the decision boundary to rely purely on the $\chi^2$ distance metric.}
     \end{subfigure}
     
     \vspace{1.5em}
@@ -1180,7 +1268,9 @@ We evaluated the dual-condition method by iterating over various combinations of
 \vfill
 \newpage
 
-The performance of the dual-condition heuristic is summarized in Table \ref{tab:ood_performance_metrics}. Across the evaluated configurations (with a constant distance threshold of $T=0.5$), we observe a clear trade-off: as the neighborhood size $K$ and Chaos variable $C$ increase, the False Alarm ratesteadily drops.
+The performance of the dual-condition heuristic is summarized in Table \ref{tab:ood_performance_metrics}. Across the evaluated configurations (with a constant distance threshold of $T=0.5$), we observe a clear trade-off: as the neighbourhood size $K$ and Chaos variable $C$ increase, the False Alarm ratesteadily drops.
+
+This decline arises because scaling the Chaos threshold imposes a stricter structural criterion for anomaly detection. By demanding a higher degree of semantic confusion among the retrieved neighbours to trigger an OOD flag.
 
 \begin{table}[htbp]
     \centering
@@ -1196,7 +1286,7 @@ The performance of the dual-condition heuristic is summarized in Table \ref{tab:
         25 & 18 & 90.00\% & 0.06\% & 97.29\% \\
         \bottomrule
     \end{tabular}
-    \caption{Quantitative performance of the dual-condition OOD detection across varying neighborhood ($K$) and Label Chaos ($C$) parameters. The distance threshold is held constant at $T=0.5$.}
+    \caption{Quantitative performance of the dual-condition OOD detection across varying neighbourhood ($K$) and Label Chaos ($C$) parameters. The distance threshold is held constant at $T=0.5$.}
     \label{tab:ood_performance_metrics}
 \end{table}
 
@@ -1234,12 +1324,12 @@ Despite utilizing identical spatial setups and equivalent Chaos thresholds, the 
 
 Despite the overall strong separability of the proposed method, certain anomalous samples consistently bypassed the detection heuristic. As visualized in Figure \ref{fig:ood_imposters}, these imposter images successfully evaded the system because their $\chi^2$ distances fell extremely close to, but just below, the required threshold $T$. 
 
-Even though their $K$-nearest neighbors consisted of several different classes—nearing the limit of our Label Chaos variable $C$—the strict dual-condition requirement was not simultaneously triggered. These edge cases highlight the inherent limitations of relying solely on Bag-of-Visual-Words histograms when global structural context is discarded.
+Even though their $K$-nearest neighbours consisted of several different classes—nearing the limit of our Label Chaos variable $C$—the strict dual-condition requirement was not simultaneously triggered. These edge cases highlight the inherent limitations of relying solely on Bag-of-Visual-Words histograms when global structural context is discarded.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/ood_benchmark/Imposter_9NN_05T_5CH_KNN_CHI.png}
-    \caption[Visualization of a persistent False Negative]{Visualization of a persistent False Negative ($K=9$). The OOD query was classified as ID because its $\chi^2$ distance remained just below the threshold, despite returning a chaotic mix of different neighbor classes.}
+    \caption[Visualization of a persistent False Negative]{Visualization of a persistent False Negative ($K=9$). The OOD query was classified as ID because its $\chi^2$ distance remained just below the threshold, despite returning a chaotic mix of different neighbour classes.}
     \label{fig:ood_imposters}
 \end{figure}
 
@@ -1322,7 +1412,7 @@ While the proposed Dual-Condition heuristic demonstrates state-of-the-art perfor
 
 The structural failure of our method in this domain is directly tied to the architectural constraints of the DINOv3 backbone. DINOv3 processes images by extracting fixed $16 \times 16$ pixel patches. Consequently, a $32 \times 32$ CIFAR-100 image yields a grid of exactly $2 \times 2$ (only 4 patches). 
 
-Attempting to build a robust BoVW semantic histogram from merely 4 tokens is mathematically futile. The resulting feature distributions are entirely too sparse for the K-Means clustering and K-NN classification pipeline to extract meaningful structural variance. In contrast, ViTs specifically trained on lower resolutions with drastically smaller patch sizes (e.g., $4 \times 4$) would be required to yield a sufficiently dense patch distribution for our method to operate.
+Attempting to build a robust BoVW semantic histogram from merely 4 tokens is mathematically futile. The resulting feature distributions are too sparse for the K-Means clustering and K-NN classification pipeline to extract meaningful structural variance. In contrast, ViTs specifically trained on lower resolutions with drastically smaller patch sizes (e.g., $4 \times 4$) would be required to yield a sufficiently dense patch distribution for our method to operate.
 
 As illustrated in Table \ref{tab:ood_cifar_failure}, the extreme sparsity causes our proposed method to collapse completely. While baseline methods like Energy-Based scoring and Deep Ensembles degrade gracefully on CIFAR-100, our spatial patch-based approach plummets to an average AUROC of 72.81\% and a practically unusable FPR95 of 69.52\%.
 
@@ -1379,7 +1469,7 @@ As illustrated in Table \ref{tab:ood_cifar_failure}, the extreme sparsity causes
 \chapter{Real-World Demonstration and Application}
 \label{chap:demo_application}
 
-To validate the theoretical framework and the robustness of our proposed pipeline in unconstrained environments, we developed an interactive demonstration application.
+To validate the theoretical framework and the robustness of our proposed pipeline in unconstrained environments, we developed an interactive demonstration application. Building upon the foundational evaluations presented in preceding chapters, this application explicitly designates the Caltech101 dataset to define our ID bounds.
 
 \section{Implementation Details}
 \label{sec:demo_implementation}
@@ -1437,7 +1527,7 @@ This thesis comprehensively investigated the viability of utilizing the DINOv3 V
 
 While the DINOv3 architecture provides highly discriminative semantic representations, this performance comes at a substantial computational and spatial cost. The extraction of dense, patch-level embeddings imposes significant memory constraints and inference latency, primarily driven by the $O(N^2)$ algorithmic complexity of the self-attention mechanism with respect to sequence length. Consequently, processing high-resolution images or scaling BoVW codebook size introduces a severe computational bottleneck. 
 
-Furthermore, the deployment of a K-Nearest Neighbors classifier over a high-dimensional continuous latent space requires extensive memory allocation to store the reference support set, limiting its viability for real-time or edge-device deployment. From a statistical learning perspective, the immense parameter count and theoretical capacity of the Vision Transformer—reflecting an exceptionally high Vapnik-Chervonenkis (VC) dimension—pose inherent risks of overfitting if adapted naively. Although our methodology mitigates this by utilizing the model as a strictly frozen, post-hoc feature extractor, the underlying structural complexity remains a fundamental trade-off between semantic abstraction capabilities and algorithmic efficiency.
+Furthermore, the deployment of a K-Nearest neighbours classifier over a high-dimensional continuous latent space requires extensive memory allocation to store the reference support set, limiting its viability for real-time or edge-device deployment. From a statistical learning perspective, the immense parameter count and theoretical capacity of the Vision Transformer—reflecting an exceptionally high Vapnik-Chervonenkis (VC) dimension—pose inherent risks of overfitting if adapted naively. Although our methodology mitigates this by utilizing the model as a strictly frozen, post-hoc feature extractor, the underlying structural complexity remains a fundamental trade-off between semantic abstraction capabilities and algorithmic efficiency.
 
 \section{Contributions}
 \label{sec:contributions}
@@ -1469,7 +1559,7 @@ Building upon these findings, there is a compelling avenue for future research u
         \textbf{FAISS}  & Facebook AI Similarity Search \\
         \textbf{FPR95}  & False Positive Rate at 95\% TPR \\
         \textbf{ID}     & In-Distribution \\
-        \textbf{K-NN}   & K-Nearest Neighbors \\
+        \textbf{K-NN}   & K-Nearest neighbours \\
         \textbf{MSP}    & Maximum Softmax Probability \\
         \textbf{OE}     & Outlier Exposure \\
         \textbf{OOD}    & Out-of-Distribution \\
@@ -1481,7 +1571,7 @@ Building upon these findings, there is a compelling avenue for future research u
         \textbf{SSL}    & Self-Supervised Learning \\
         \textbf{SVHN}   & Street View House Numbers \\
         \textbf{TF-IDF} & Term Frequency-Inverse Document Frequency \\
-        \textbf{t-SNE}  & t-Distributed Stochastic Neighbor Embedding \\
+        \textbf{t-SNE}  & t-Distributed Stochastic neighbour Embedding \\
         \textbf{ViT}    & Vision Transformer \\
         \textbf{VC}     & Vapnik-Chervonenkis \\
         \textbf{YOLO}   & You Only Look Once \\
