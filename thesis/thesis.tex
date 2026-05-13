@@ -687,7 +687,55 @@ This behavior extends to complex scenes. In the cityscape example (Figure~\ref{f
 \section{Out-of-Distribution Detection Methods}
 \label{sec:ood_methods}
 
-To evaluate the robustness and generalizability of the learned representations, we conducted a series of OOD detection experiments. In this setup, the Food-101 dataset was designated as the ID baseline. We then evaluated the model's ability to distinguish these ID samples from three distinct OOD datasets: Oxford-IIIT Pet, FGVC Aircraft, and the Describable Textures Dataset (DTD). To preserve high-frequency visual details crucial for both fine-grained classification and texture recognition, all images were uniformly processed through a $512 \times 512$ resolution pipeline.
+To evaluate the robustness and generalizability of the learned representations, we conducted a series of Out-of-Distribution (OOD) detection experiments. In this setup, the Food-101 dataset was designated as the In-Distribution (ID) baseline. We then evaluated the model's ability to distinguish these ID samples from three distinct OOD datasets: Oxford-IIIT Pet, FGVC Aircraft, and the Describable Textures Dataset (DTD). The quantitative breakdown of the datasets used in this evaluation is detailed in Table~\ref{tab:dataset_stats}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Dataset statistics for In-Distribution (ID) and Out-of-Distribution (OOD) evaluation.}
+    \label{tab:dataset_stats}
+    \begin{tabular}{@{}lcc@{}}
+        \toprule
+        \textbf{Dataset} & \textbf{Total Images} & \textbf{Total Classes} \\
+        \midrule
+        Food-101 (ID) & 25,250 & 101 \\
+        Oxford-IIIT Pet (OOD) & 3,669 & 37 \\
+        FGVC Aircraft (OOD) & 3,333 & 100 \\
+        DTD (OOD) & 1,880 & 47 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+To preserve high-frequency visual details crucial for both fine-grained classification and texture recognition, all images were uniformly processed through a $512 \times 512$ resolution pipeline. The qualitative effects of this preprocessing step are illustrated in the subsequent figures, which contrast the original high-resolution inputs with the standardized inputs fed into the DINOv3 architecture.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/dataset_showcase/food.png}
+    \caption{Diversity check for the Food-101 dataset (ID). The top row displays the original images alongside their respective class labels, while the bottom row visualizes the processed $512 \times 512$ inputs prepared for the DINOv3 pipeline.}
+    \label{fig:diversity_food}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/dataset_showcase/oxford_pets.png}
+    \caption{Diversity check for the Oxford-IIIT Pet dataset (OOD). Images are shown before (top) and after (bottom) uniform $512 \times 512$ resolution processing.}
+    \label{fig:diversity_pets}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/dataset_showcase/aircraft.png}
+    \caption{Diversity check for the FGVC Aircraft dataset (OOD). Images are shown before (top) and after (bottom) uniform $512 \times 512$ resolution processing.}
+    \label{fig:diversity_aircraft}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/dataset_showcase/textures.png}
+    \caption{Diversity check for the Describable Textures Dataset (DTD) (OOD). Images are shown before (top) and after (bottom) uniform $512 \times 512$ resolution processing.}
+    \label{fig:diversity_textures}
+\end{figure}
+
+\vfill
 
 \subsection{Linear Probe and Scoring Functions}
 Foundation models such as DINOv3 inherently output high-dimensional feature embeddings rather than class-specific logits. However, several prominent post-hoc OOD detection algorithms operate directly on the logit space of a classifier. To bridge this gap without distorting the pre-trained manifold via full fine-tuning, we trained a simple Linear Probe on top of the frozen DINOv3 embeddings. This yielded the necessary pre-softmax logits for our target ID classes (Food-101).
@@ -764,16 +812,15 @@ In order to investigate the localized semantic representations learned by the DI
 
 The DINOv3 processes each image by subdividing it into non-overlapping patches of size $16 \times 16$ pixels. For each patch, a high-dimensional feature vector was extracted from the deeper layers of the model. 
 
-% ---------------------------------------------------------
 \subsection{Clustering Methodology}
 \label{sec:kmeans_methodology}
 % ---------------------------------------------------------
-To group these dense feature vectors into distinct visual concepts, the K-Means clustering algorithm was utilized. The optimal number of clusters, denoted as $K$, was systematically determined using the Elbow method \cite{Kodinariya2013ReviewOD}, which evaluates the explained variance as a function of the number of clusters (depicted in Figure~\ref{fig:elbow_method}).
+To group the dense feature vectors into distinct visual concepts, the K-Means clustering algorithm was applied. The number of clusters, denoted as $K$, was evaluated over the range $K \in [1,16]$ using the Elbow method \cite{Kodinariya2013ReviewOD}. Since the within-cluster sum of squares (WCSS) curve did not exhibit a pronounced elbow, $K=6$ was selected empirically as it provided a suitable balance between semantic separation and cluster granularity for the downstream classification pipeline.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{figures/clustering/elbow_method_no_crop.png} 
-    \caption[Composite K-Means clustering analysis for mammals]{Elbow method for determining the optimal number of clusters $K$ in the K-Means algorithm applied to DINOv3 patch representations. The plot illustrates the within-cluster sum of squares (WCSS) as a function of $K$, with a inflection point observed at $K=6$, indicating that this is the optimal number of clusters for capturing the underlying structure in the feature space.}
+    \caption[WCSS analysis for K-Means clustering of mammals]{WCSS as a function of the number of clusters $K$ for K-Means clustering applied to DINOv3 patch representations. Although no distinct elbow is observed, $K=6$ was selected empirically based on the resulting semantic cluster quality.}
     \label{fig:elbow_method}
 \end{figure}
 
@@ -835,12 +882,12 @@ To achieve this isolation, a Logistic Regression classifier was trained on the f
 
 Using the binary masks generated by this linear probe, the original $512 \times 512$ images were tightly cropped around the predicted animal foregrounds. Following this isolation, the standardized pipeline resized the resulting images back to the uniform resolution required by the Vision Transformer. The DINOv3 model then processed these object-centric images, extracting $16 \times 16$ patch tokens exclusively from the anatomical features of the subjects. 
 
-The K-Means clustering algorithm was subsequently applied to this filtered subset of high-dimensional feature vectors. Because the variance introduced by diverse backgrounds was eliminated, the optimal number of clusters, $K$, was re-evaluated using the Elbow method. Without the need to allocate cluster centroids to environmental textures, the algorithm was forced to partition the feature space based strictly on the morphological and textural variations of the animals themselves (Figure~\ref{fig:elbow_method_cropped}).
+The K-Means clustering algorithm was subsequently applied to the filtered subset of high-dimensional feature vectors. The number of clusters, $K$, was re-evaluated over the range $K \in [1,16]$ using the Elbow method \cite{Kodinariya2013ReviewOD}. Following the same criteria described previously, $K=6$ was selected as it provided an effective balance between semantic separation and cluster granularity. By removing background information, the clustering process focused primarily on the morphological and textural characteristics of the animals themselves (Figure~\ref{fig:elbow_method_cropped}).
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{figures/clustering/elbow_method_cropped.png} 
-    \caption[Elbow method for foreground-isolated clustering]{Elbow method evaluation for K-Means clustering applied to foreground-isolated DINOv3 patch representations. The removal of background features alters the within-cluster sum of squares (WCSS) trajectory, reflecting a purely object-centric latent space.}
+    \caption[Elbow method for foreground-isolated clustering]{Within-cluster sum of squares (WCSS) as a function of the number of clusters $K$ for K-Means clustering applied to foreground-isolated DINOv3 patch representations.}
     \label{fig:elbow_method_cropped}
 \end{figure}
 
@@ -850,7 +897,7 @@ The K-Means clustering algorithm was subsequently applied to this filtered subse
 % ---------------------------------------------------------
 To further evaluate the robustness and generalization of the learned semantic representations, the dataset was expanded beyond mammalian subjects to include a broader taxonomy of animals. Additionally, an image of an inanimate object such as car was introduced to the pipeline to determine whether the Vision Transformer perceives structural compositions of non-biological entities in a visually analogous manner. 
 
-An analysis of the resulting cluster-coloured patch maps reveals a highly consistent anatomical and spatial segmentation across the diverse subjects. By visualizing the optimal $K=6$ clusters, we observe that the K-Means algorithm partitioned the feature space into distinct, localized semantic concepts:
+An analysis of the resulting cluster-coloured patch maps reveals a highly consistent anatomical and spatial segmentation across the diverse subjects. By visualizing $K=6$ clusters, we observe that the K-Means algorithm partitioned the feature space into distinct, localized semantic concepts:
 \begin{itemize}
     \item \textbf{Cluster 4 (Yellow):} Predominantly encapsulates the heads or facial structures of the animals.
     \item \textbf{Cluster 1 (Green):} Isolates the lower extremities and legs.
@@ -1120,13 +1167,30 @@ Let $x$ be an inference query and $N_K(x)$ be the set of its $K$ nearest neighbo
 
 \begin{enumerate}
     \item \textbf{Distance Threshold ($T$):} We evaluate the $\chi^2$ distance to the closest neighbor. If the distance exceeds a predefined threshold $T$, the sample is considered structurally distant from the known data manifold.
-    \item \textbf{Neighborhood Label Chaos ($C$):} We introduce a secondary structural variable, denoted as $C$, which measures the maximum allowable number of unique classes within the $K$ nearest neighbors.
+    \item \textbf{Neighborhood Label Chaos ($C$) and Semantic Consistency:} We introduce $C$, the maximum allowable unique classes within the $K$ nearest neighbours, as a proxy for local semantic consistency. Within the framework of information theory, $C$ correlates with the Shannon entropy of the neighborhood's class distribution:
+    
+    $$H(x) = - \sum_{i=1}^{C} p_i \log(p_i)$$
+    
+    where $p_i$ is the fraction of neighbours in $N_K(x)$ belonging to class $i$. ID queries typically form dense, homogeneous clusters ($H(x) \approx 0$), whereas OOD samples map to sparse or overlapping regions, yielding mixed, high-entropy neighborhoods. By thresholding $C$, we filter these high-entropy OOD inputs, restricting accepted predictions to stable, consistent local manifolds.
 \end{enumerate}
 
-The final decision boundary dictates that a sample is flagged as OOD if and only if both the distance exceeds $T$ and the label chaos or exceeds $C$:
+To rigorously define the OOD detection boundary, we first formalize the local neighborhood of a query sample $x$. Let $N_K(x)$ denote the set of the $K$ nearest neighbours to $x$ in the representation space, defined as:
 \begin{equation}
-    \text{IsOOD}(x) = \begin{cases} 
-      1 & \text{if } D_{\chi^2}(x, N_K) > T \land | \text{UniqueClasses}(N_K(x)) | > C \\
+    N_K(x) = \{(x_1, y_1), (x_2, y_2), \dots, (x_K, y_K)\}
+\end{equation}
+where $x_i$ represents the feature vector of the $i$-th neighbor and $y_i \in \mathcal{Y}$ is its corresponding ground-truth label.
+
+To quantify the local semantic consistency, we isolate the set of labels present within this neighborhood:
+\begin{equation}
+    Y_K(x) = \{y_i \mid (x_i, y_i) \in N_K(x)\}
+\end{equation}
+Because $Y_K(x)$ is a set, it inherently contains only unique elements. Consequently, the cardinality of this set, $|Y_K(x)|$, yields the exact number of unique classes within the $K$-nearest neighbors.
+
+The final decision boundary dictates that a sample is flagged as OOD if and only if both the $\chi^2$ distance exceeds a threshold $T$ and the neighborhood label cardinality strictly exceeds the chaos limit $C$. We express this via the indicator function $\mathbb{I}_{\text{OOD}}(x)$:
+\begin{equation}
+    \mathbb{I}_{\text{OOD}}(x) = 
+    \begin{cases} 
+      1 & \text{if } D_{\chi^2}(x, N_K(x)) > T \land |Y_K(x)| > C \\
       0 & \text{otherwise}
    \end{cases}
 \end{equation}
@@ -1157,7 +1221,7 @@ We evaluated the dual-condition method by iterating over various combinations of
     \centering
     \begin{subfigure}[b]{0.85\textwidth}
         \includegraphics[width=\textwidth]{figures/ood_benchmark/3NN_05T_1CH_KNN_CHI.png}
-        \caption{$K=3, T=0.5, C=1$}
+        \caption{$K=3, T=0.5, C=1$. Note that setting the chaos limit to $C=1$ effectively neutralizes the semantic consistency condition, reducing the decision boundary to rely purely on the $\chi^2$ distance metric.}
     \end{subfigure}
     
     \vspace{1.5em}
@@ -1201,6 +1265,8 @@ We evaluated the dual-condition method by iterating over various combinations of
 \newpage
 
 The performance of the dual-condition heuristic is summarized in Table \ref{tab:ood_performance_metrics}. Across the evaluated configurations (with a constant distance threshold of $T=0.5$), we observe a clear trade-off: as the neighborhood size $K$ and Chaos variable $C$ increase, the False Alarm ratesteadily drops.
+
+This decline arises because scaling the Chaos threshold imposes a stricter structural criterion for anomaly detection. By demanding a higher degree of semantic confusion among the retrieved neighbours to trigger an OOD flag.
 
 \begin{table}[htbp]
     \centering
@@ -1399,7 +1465,7 @@ As illustrated in Table \ref{tab:ood_cifar_failure}, the extreme sparsity causes
 \chapter{Real-World Demonstration and Application}
 \label{chap:demo_application}
 
-To validate the theoretical framework and the robustness of our proposed pipeline in unconstrained environments, we developed an interactive demonstration application.
+To validate the theoretical framework and the robustness of our proposed pipeline in unconstrained environments, we developed an interactive demonstration application. Building upon the foundational evaluations presented in preceding chapters, this application explicitly designates the Caltech101 dataset to define our ID bounds.
 
 \section{Implementation Details}
 \label{sec:demo_implementation}
