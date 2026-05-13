@@ -95,14 +95,12 @@ Tato bakalářská práce se zabývá detekcí dat mimo distribuci s využitím 
 \label{intro}
 Deep learning architectures are currently experiencing a substantial surge in prevalence. Convolutional Neural Networks (CNNs) and Vision Transformers (ViTs) have demonstrated remarkable performance in various computer vision tasks. However, the real world is full of unknowns, which poses serious challenges for these models. When deployed in dynamic environments, they often encounter inputs that differ significantly from their training data, leading to unreliable predictions, \textbf{as illustrated in Figure \ref{fig:yolo_fail}.} The task of identifying such inputs, known as out-of-distribution (OOD) detection, is crucial for ensuring the safety and reliability of Artifical Intelligence (AI) systems.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/yolo_sign_failure.jpg}
-    \caption[YOLO detection limitations on traffic signs]{Limitations of a standard You Only Look Once (YOLO) detector. The model fails to recognize the nearest `No Parking' sign (False Negative) while misclassifying distant ones as `Stop Signs'. This illustrates the necessity for robust feature representations.}
+    \includegraphics[width=0.73\textwidth]{figures/yolo_sign_failure.jpg}
+    \caption[YOLO detection limitations on traffic signs]{Evaluation of YOLOv8 detection performance on prohibitory signage. The model exhibits a classification error, misidentifying a 'No Stopping' sign as a 'Stop' sign.}
     \label{fig:yolo_fail}
 \end{figure}
-
-\vfill
 
 Previous research has primarily focused on binary OOD detection, where models must distinguish only between in-distribution (ID) and OOD samples.\cite{wallin2025prohocprobabilistichierarchicaloutofdistribution}
 While this is an important step towards robust AI, it does not fully capture the complexity of real-world scenarios. For example, when an autonomous vehicle encounters an unseen input, it is insufficient to simply flag it as OOD. Instead, a hierarchical approach assigns it to a generic class (e.g., `obstacle'), preserving semantic information essential for decision-making.
@@ -1216,8 +1214,6 @@ To benchmark the rejection capabilities, we introduced the following \textbf{OOD
 \section{Empirical Results: Chi-Square Decision Boundaries}
 \label{sec:ood_chi_results}
 
-\section{Empirical Results: Chi-Square Decision Boundaries}
-\label{sec:ood_chi_results}
 To validate the dual-condition method, we systematically explored the hyperparameter space defined by the neighbourhood size $K$, the distance threshold $T$, and the chaos limit $C$. Figure \ref{fig:ood_chi_iterations} illustrates the model's performance across five representative configurations, accompanied by 2D decision boundary visualizations that explicitly delineate the OOD rejection zones.
 
 % --- FIGURE: 5 Iterations of Chi-Square ---
