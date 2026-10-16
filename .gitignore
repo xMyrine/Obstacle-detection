@@ -36,3 +36,7 @@ __pycache__/
 *.synctex(busy)
 
 *.DS_Store
+#Certificates and keys
+*.pem
+*.key
+.gradio/
